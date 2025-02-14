@@ -18,7 +18,7 @@ export const Loader = ({
   onBackPress,
   imageStyle,
   source,
-  backgroundColor = `rgba(100, 100, 100, 0.5)`,
+  backgroundColor = 'rgba(100, 100, 100, 0.5)',
 }) => {
   return (
     <Modal
@@ -35,7 +35,7 @@ export const Loader = ({
           backgroundColor: 'rgba(100, 100, 100, 0.5)',
         }}>
         <View style={{}}>
-          {/* <View style={{...styles.logoContainer}}> 
+          {/* <View style={{...styles.logoContainer}}>
             <Image
               resizeMode={'contain'}
               style={{

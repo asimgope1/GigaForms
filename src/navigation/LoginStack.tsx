@@ -30,4 +30,4 @@ const LoginStack = () => {
     </Stack.Navigator>
   );
 };
-export default LoginStack
+export default LoginStack;

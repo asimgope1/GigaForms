@@ -1,59 +1,93 @@
-import { View, Image, SafeAreaView } from 'react-native';
-import React, { Fragment, useEffect } from 'react';
-import { BRAND, WHITE } from '../../constants/color';
+import React, {Fragment, useEffect, useState} from 'react';
+import {View, Image, SafeAreaView, Animated} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { LOGO, LOGOZZ } from '../../constants/imagepath';
-import { HEIGHT, MyStatusBar, WIDTH } from '../../constants/config';
-import { splashStyles } from './SplashStyles';
+import {BRAND, GREEN, WHITE} from '../../constants/color';
+import {LOGO, LOGOZZ} from '../../constants/imagepath';
+import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
+import {splashStyles} from './SplashStyles';
 
-const Splash = ({ navigation }) => {
+interface SplashProps {
+  navigation: any; // Add proper navigation prop type based on your navigation library (e.g., React Navigation)
+}
+
+const Splash: React.FC<SplashProps> = ({navigation}) => {
+  const [fadeAnim] = useState(new Animated.Value(0)); // Initial opacity is 0
+  const [scaleAnim] = useState(new Animated.Value(0.5)); // Initial scale is 0.5 (zoomed out)
+
   useEffect(() => {
+    // Start fade-in animation
+    Animated.timing(fadeAnim, {
+      toValue: 1, // Fade to full opacity
+      duration: 2000, // Duration of the animation
+      useNativeDriver: true,
+    }).start();
+
+    // Start zoom-in animation
+    Animated.timing(scaleAnim, {
+      toValue: 1, // Zoom to full scale
+      duration: 2000, // Duration of the zoom effect
+      useNativeDriver: true,
+    }).start();
+
     setTimeout(() => {
+      // Uncomment the following line to navigate to the login screen after splash
       navigation.navigate('Login');
-    }, 1000);
-  }, []);
+    }, 3000); // Duration of splash screen
+  }, [fadeAnim, scaleAnim, navigation]);
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={BRAND} barStyle={'dark-content'} />
+      <MyStatusBar backgroundColor={WHITE} barStyle="dark-content" />
       <SafeAreaView style={splashStyles.maincontainer}>
         <LinearGradient
-          end={{ x: 0, y: 0 }}
-          start={{ x: 0, y: 1 }}
-          colors={[BRAND, BRAND]}
+          end={{x: 0, y: 0}}
+          start={{x: 0, y: 1}}
+          colors={[WHITE, WHITE]}
           style={{
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
           }}>
-          <View
+          {/* Animated Logo with Zoom Effect */}
+          <Animated.View
             style={{
               ...splashStyles.logoContainer,
-              width: WIDTH * 0.9,
-              height: HEIGHT * 0.2,
+              width: WIDTH * 1.2, // Increased width for larger logo
+              height: HEIGHT * 0.3, // Increased height for larger logo
+              opacity: fadeAnim, // Bind opacity to animated value
+              transform: [{scale: scaleAnim}], // Apply scaling transform
             }}>
             <Image
-              resizeMode={'contain'}
+              resizeMode="contain"
               style={{
                 alignSelf: 'center',
-                width: '90%',
-                height: '100%',
+                width: '150%', // Set to full width of container
+                height: '150%', // Set to full height of container
               }}
-            // source={LOGOZZ}
+              source={LOGOZZ} // Assuming LOGOZZ is the brand logo
             />
-          </View>
-          <View style={splashStyles.logoContainer}>
+          </Animated.View>
+
+          {/* Secondary Logo with Zoom Effect */}
+          <Animated.View
+            style={{
+              ...splashStyles.logoContainer,
+              width: WIDTH * 1.1, // Increased width for larger logo
+              height: HEIGHT * 0.25, // Increased height for larger logo
+              opacity: fadeAnim, // Bind opacity to animated value
+              transform: [{scale: scaleAnim}], // Apply scaling transform
+            }}>
             <Image
               tintColor={WHITE}
-              resizeMode={'contain'}
+              resizeMode="contain"
               style={{
                 alignSelf: 'center',
-                width: '80%',
-                height: '90%',
+                width: '100%', // Set to full width of container
+                height: '100%', // Set to full height of container
               }}
-            // source={LOGO}
+              source={LOGO} // Assuming LOGO is the app logo
             />
-          </View>
+          </Animated.View>
         </LinearGradient>
       </SafeAreaView>
     </Fragment>

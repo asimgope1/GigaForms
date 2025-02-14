@@ -30,3 +30,5 @@ export const PRICETEXT = '#3F3F3F';
 export const LIGHTGRAY1 = '#B7BCC2';
 export const BRANDRED = '#C90329';
 export const PROFILESTATUSBAR = '#F9F9F9';
+export const VIOLET = 'rgb(188, 129, 246)';
+export const PURPLELIGHT = '#7F00FF';

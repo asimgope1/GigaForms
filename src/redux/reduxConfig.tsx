@@ -3,14 +3,14 @@ import thunk from 'redux-thunk';
 import rootReducer from './reducers/index';
 
 const middleware = [
-    thunk
-]
+    thunk,
+];
 
 export default configure = (initialState = {}) => {
     return configureStore(
         rootReducer,
         initialState,
-        compose(applyMiddleware(...middleware)))
-}
+        compose(applyMiddleware(...middleware)));
+};
 
 
