@@ -5,6 +5,7 @@ export const splashStyles = StyleSheet.create({
   maincontainer: {
     height: '100%',
     width: '100%',
+    alignSelf: 'center',
     backgroundColor: WHITE,
   },
   logoContainer: {

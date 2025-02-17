@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {HEIGHT, MyStatusBar, WIDTH} from '../constants/config';
 import {LOGO} from '../constants/imagepath';
-import {BRAND, BRANDTEXT, GREEN, WHITE} from '../constants/color';
+import {BRAND, BRANDTEXT, DARKGREEN, GREEN, WHITE} from '../constants/color';
 import LinearGradient from 'react-native-linear-gradient';
 
 export const Loader = ({
@@ -46,7 +46,7 @@ export const Loader = ({
               source={LOGO}
             />
           </View> */}
-          <ActivityIndicator size="large" color={BRAND} />
+          <ActivityIndicator size="large" color={DARKGREEN} />
         </View>
       </View>
     </Modal>

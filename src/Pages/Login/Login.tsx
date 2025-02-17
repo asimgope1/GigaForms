@@ -11,29 +11,36 @@ import {
   Keyboard,
 } from 'react-native';
 import {TextInput, Button, Text} from 'react-native-paper';
+import Toast from 'react-native-toast-message';
 import {LOGOZZ} from '../../constants/imagepath';
 import {GREEN, WHITE, BLACK} from '../../constants/color';
 import {WIDTH} from '../../constants/config';
+import {POSTNETWORK} from '../../utils/Network';
+import {storeObjByKey} from '../../utils/Storage';
+import {BASE_URL} from '../../constants/url';
+import {useDispatch} from 'react-redux';
+import {checkuserToken} from '../../redux/actions/auth';
+import {Loader} from '../../components/Loader';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Animated Logo
+  // Animated Logo & Form
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Scale animation (Logo grows in size)
+    // Scale animation for logo
     Animated.timing(scaleAnim, {
       toValue: 1,
       duration: 1000,
       useNativeDriver: true,
     }).start();
 
-    // Rotate animation (Logo spins)
+    // Rotate animation (looping)
     Animated.loop(
       Animated.timing(rotateAnim, {
         toValue: 1,
@@ -42,26 +49,57 @@ const Login = () => {
         useNativeDriver: true,
       }),
     ).start();
+
+    // Fade-in effect for form
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
-  const handleLogin = () => {
+  const dispatch = useDispatch();
+
+  const handleLogin = async () => {
     if (!email || !password) {
-      setError('Please enter email and password');
+      showToast('error', 'Login Failed', 'Please enter email and password');
       return;
     }
-    setError('');
+
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await POSTNETWORK(`${BASE_URL}user/token/`, {
+        email: email.trim(),
+        password: password.trim(),
+      });
+
+      if (response?.access && response?.refresh) {
+        storeObjByKey('loginResponse', response);
+        dispatch(checkuserToken(true));
+        showToast('success', 'Login Successful', 'Welcome back!');
+      } else {
+        showToast('error', 'Invalid Credentials', 'Check email and password');
+      }
+    } catch (error) {
+      console.error('Login Error:', error);
+      showToast('error', 'Login Failed', 'Something went wrong. Try again.');
+    } finally {
       setLoading(false);
-      console.log('Logged in with:', email, password);
-    }, 2000);
+    }
   };
 
-  const rotateInterpolate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  const showToast = (type, title, message) => {
+    Toast.show({
+      type: type,
+      text1: title,
+      text2: message,
+      position: 'top',
+      visibilityTime: 3000,
+      autoHide: true,
+      topOffset: 50,
+    });
+  };
 
   return (
     <KeyboardAvoidingView
@@ -71,10 +109,13 @@ const Login = () => {
         <ScrollView
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled">
-          {/* Card-like Login Box */}
-          <View style={styles.loginBox}>
+          {/* Login Box */}
+          <Animated.View style={[styles.loginBox, {opacity: fadeAnim}]}>
             {/* Animated Logo */}
-            <Animated.Image source={LOGOZZ} style={[styles.logo]} />
+            <Animated.Image
+              source={LOGOZZ}
+              style={[styles.logo, {transform: [{scale: scaleAnim}]}]}
+            />
 
             {/* Email Input */}
             <TextInput
@@ -105,9 +146,6 @@ const Login = () => {
               activeOutlineColor={GREEN}
             />
 
-            {/* Error Message */}
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
             {/* Login Button with Loading */}
             <Button
               mode="contained"
@@ -124,9 +162,11 @@ const Login = () => {
               Don't have an account?{' '}
               <Text style={styles.signupLink}>Sign Up</Text>
             </Text>
-          </View>
+          </Animated.View>
         </ScrollView>
       </TouchableWithoutFeedback>
+      <Toast />
+      <Loader visible={loading} />
     </KeyboardAvoidingView>
   );
 };
@@ -136,25 +176,24 @@ export default Login;
 const styles = StyleSheet.create({
   flexContainer: {
     flex: 1,
-    backgroundColor: WHITE, // Light background for contrast
+    backgroundColor: WHITE,
   },
   container: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    backgroundColor: WHITE, // Light background for contrast
+    backgroundColor: WHITE,
   },
   loginBox: {
     width: WIDTH * 0.9,
     padding: 20,
-    backgroundColor: WHITE, // White card
+    backgroundColor: WHITE,
     borderRadius: 15,
-    // shadowColor: BLACK,
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.2,
     shadowRadius: 6,
-    // elevation: 4, // Android shadow
+    elevation: 6,
     alignItems: 'center',
   },
   logo: {
@@ -170,11 +209,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     backgroundColor: GREEN,
     width: '100%',
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
-    textAlign: 'center',
   },
   signupText: {
     textAlign: 'center',

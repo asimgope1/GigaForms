@@ -1,4 +1,4 @@
-import React, {Fragment} from 'react';
+import React, {Fragment, useEffect, useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,13 +6,78 @@ import {
   TouchableOpacity,
   Pressable,
   SafeAreaView,
+  Modal,
+  TextInput,
+  Button,
 } from 'react-native';
 import {Avatar} from 'react-native-paper';
 import {HEIGHT, MyStatusBar} from '../../constants/config';
 import {Icon} from 'react-native-paper';
-import {DARKGREEN, WHITE} from '../../constants/color';
+import {BLACK, DARKGREEN, GRAY, WHITE} from '../../constants/color';
+import {BASE_URL} from '../../constants/url';
+import {GETNETWORK} from '../../utils/Network';
+import {Loader} from '../../components/Loader';
 
 const Profile = ({navigation}: any) => {
+  const [userDetails, setUserDetails] = useState<any>(null); // State for user details
+  const [modalVisible, setModalVisible] = useState(false); // State to control modal visibility
+  const [oldPassword, setOldPassword] = useState(''); // State for old password input
+  const [newPassword, setNewPassword] = useState(''); // State for new password input
+  const [loading, SetLoading] = useState(false); // State for loading
+
+  useEffect(() => {
+    getProfileData();
+  }, []);
+
+  // API call to get profile data
+  const getProfileData = async () => {
+    SetLoading(true);
+    try {
+      const url = `${BASE_URL}user/profile/`;
+      const response = await GETNETWORK(url, true); // Assuming GETNETWORK is an async function
+      console.log('response', response);
+      SetLoading(false); // Hide loader after successful API call
+      setUserDetails(response); // Set user details from API response
+    } catch (error) {
+      SetLoading(false);
+      console.error('Error fetching profile data:', error);
+      alert('Failed to load profile data.');
+    }
+  };
+
+  // API call to change the password
+  const handleChangePassword = async () => {
+    if (!oldPassword || !newPassword) {
+      alert('Please fill in both fields.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}user/change_password/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          old_password: oldPassword,
+          new_password: newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Password changed successfully!');
+        setModalVisible(false); // Close modal after successful change
+      } else {
+        alert(data.message || 'Failed to change password!');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Failed to change password!');
+    }
+  };
+
   return (
     <Fragment>
       <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
@@ -31,23 +96,34 @@ const Profile = ({navigation}: any) => {
           <View style={styles.avatarContainer}>
             <Avatar.Image
               size={100}
-              source={{uri: 'https://www.example.com/profile.jpg'}} // Replace with actual URL
+              source={{
+                uri:
+                  userDetails?.profile ?? 'https://www.example.com/profile.jpg', // Use the profile URL if available
+              }}
               style={styles.avatar}
             />
           </View>
 
           {/* User Info */}
           <View style={styles.userInfoContainer}>
-            <Text style={styles.userName}>Asim Gope</Text>
-            <Text style={styles.userType}>User</Text>
-            <Text style={styles.userEmail}>asimgope53@gmail.com</Text>
-            <Text style={styles.userPhone}>+91 8340431775</Text>
+            <Text style={styles.userName}>
+              {userDetails?.name ?? 'User Name'}
+            </Text>
+            <Text style={styles.userType}>
+              {userDetails?.is_staff ? 'Staff' : 'User'}
+            </Text>
+            <Text style={styles.userEmail}>
+              {userDetails?.email ?? 'Email not available'}
+            </Text>
+            <Text style={styles.userPhone}>
+              {userDetails?.phone ?? 'Phone number not available'}
+            </Text>
           </View>
 
           {/* Buttons */}
           <TouchableOpacity
             style={styles.editButton}
-            onPress={() => alert('Change Password')}>
+            onPress={() => setModalVisible(true)}>
             <Text style={styles.editButtonText}>Change Password</Text>
           </TouchableOpacity>
 
@@ -57,7 +133,43 @@ const Profile = ({navigation}: any) => {
             <Text style={styles.logoutButtonText}>Logout</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Change Password Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Change Password</Text>
+
+              <TextInput
+                placeholderTextColor={GRAY}
+                style={styles.input}
+                placeholder="Old Password"
+                secureTextEntry
+                value={oldPassword}
+                onChangeText={setOldPassword}
+              />
+              <TextInput
+                placeholderTextColor={GRAY}
+                style={styles.input}
+                placeholder="New Password"
+                secureTextEntry
+                value={newPassword}
+                onChangeText={setNewPassword}
+              />
+
+              <View style={styles.modalButtons}>
+                <Button title="Cancel" onPress={() => setModalVisible(false)} />
+                <Button title="Submit" onPress={handleChangePassword} />
+              </View>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
+      <Loader visible={loading} />
     </Fragment>
   );
 };
@@ -144,5 +256,40 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: '600',
+  },
+
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Overlay background
+  },
+  modalContent: {
+    width: '80%',
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: BLACK,
+  },
+  input: {
+    width: '100%',
+    padding: 10,
+    marginBottom: 15,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    color: BLACK,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
   },
 });

@@ -2,7 +2,9 @@ import {getObjByKey} from '../../utils/Storage';
 import {AUTH_STATUS} from '../types';
 
 export const checkuserToken = () => {
-  return async dispatch => {
+  return async (
+    dispatch: (action: {type: string; payload: boolean}) => void,
+  ) => {
     getObjByKey('loginResponse').then(res => {
       res
         ? dispatch({

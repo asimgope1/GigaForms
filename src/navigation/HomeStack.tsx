@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
 import {
   createDrawerNavigator,
@@ -11,6 +11,13 @@ import Profile from '../Pages/Profile/Profile';
 import {Icon} from 'react-native-paper';
 import {GREEN} from '../constants/color';
 import Forms from '../Pages/Forms/Forms';
+import FormsTemplates from '../Pages/Forms/FormsTemplates';
+import {clearAll} from '../utils/Storage';
+import {checkuserToken} from '../redux/actions/auth';
+import {useDispatch} from 'react-redux';
+import CreateUser from '../Pages/CreateUser/CreateUser';
+import {BASE_URL} from '../constants/url';
+import {GETNETWORK} from '../utils/Network';
 
 // Define Stack and Drawer Navigators
 const Stack = createNativeStackNavigator();
@@ -21,15 +28,38 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
   const [showRegistrationSubItems, setShowRegistrationSubItems] =
     useState(false);
   const [showApprovalSubItems, setShowApprovalSubItems] = useState(false);
+  const dispacth = useDispatch();
+  const [loading, SetLoading] = useState(false); // State for loading
+  const [userDetails, setUserDetails] = useState<any>(null); // State for user details
+
+  useEffect(() => {
+    getProfileData();
+  }, []);
+
+  // API call to get profile data
+  const getProfileData = async () => {
+    SetLoading(true);
+    try {
+      const url = `${BASE_URL}user/profile/`;
+      const response = await GETNETWORK(url, true); // Assuming GETNETWORK is an async function
+      console.log('response', response);
+      SetLoading(false); // Hide loader after successful API call
+      setUserDetails(response); // Set user details from API response
+    } catch (error) {
+      SetLoading(false);
+      console.error('Error fetching profile data:', error);
+      alert('Failed to load profile data.');
+    }
+  };
   return (
     <DrawerContentScrollView contentContainerStyle={styles.drawerContainer}>
       {/* Profile Section */}
       <View style={styles.profileSection}>
         <Image
-          source={{uri: 'https://randomuser.me/api/portraits/men/50.jpg'}} // Replace with dynamic user image
+          // source={{uri: 'https://randomuser.me/api/portraits/men/50.jpg'}} // Replace with dynamic user image
           style={styles.profileImage}
         />
-        <Text style={styles.profileName}>John Doe</Text>
+        <Text style={styles.profileName}>{userDetails?.name}</Text>
       </View>
 
       {/* Drawer Items */}
@@ -92,8 +122,20 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
         <Text style={styles.drawerItemText}>Profile</Text>
       </TouchableOpacity>
       <TouchableOpacity
+        style={styles.drawerItem}
+        onPress={() => navigation.navigate('Create-User')}>
+        <Icon source="account-plus" size={24} color={GREEN} />
+        <Text style={styles.drawerItemText}>Create User</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
         style={styles.logout}
-        onPress={() => navigation.navigate('Profile')}>
+        onPress={() => {
+          // alert asking for confirmation to logout
+          alert('Are you sure you want to logout?');
+          clearAll();
+          dispacth(checkuserToken());
+          // Implement logout logic here
+        }}>
         <Icon source="logout" size={24} color={GREEN} />
         <Text style={styles.drawerItemText}>Logout</Text>
       </TouchableOpacity>
@@ -141,6 +183,16 @@ const MyDrawer: React.FC = () => {
       <Drawer.Screen
         name="Forms"
         component={Forms}
+        options={{headerShown: false}}
+      />
+      <Drawer.Screen
+        name="Forms Templates"
+        component={FormsTemplates}
+        options={{headerShown: false}}
+      />
+      <Drawer.Screen
+        name="Create-User"
+        component={CreateUser}
         options={{headerShown: false}}
       />
     </Drawer.Navigator>

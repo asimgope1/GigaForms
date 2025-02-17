@@ -1,25 +1,23 @@
 import React from 'react';
-import {View, Text} from 'react-native';
+import {View, Text, ScrollView} from 'react-native';
 import {DataTable} from 'react-native-paper';
 import {BLACK, WHITE} from '../../constants/color';
 import {HEIGHT} from '../../constants/config';
 
 interface DataTableComponentProps {
-  title: string; // Header of the table
-  items: any[]; // Data to display in the table
-  columns: string[]; // Column headers
-  page: number; // Current page for pagination
-  itemsPerPage: number; // Items per page
-  setPage: (newPage: number) => void; // Function to set page
-  from: number; // Starting index for pagination
-  to: number; // Ending index for pagination
-  onItemsPerPageChange: (itemsPerPage: number) => void; // Function to change items per page
+  title: string;
+  items: any[];
+  page: number;
+  itemsPerPage: number;
+  setPage: (newPage: number) => void;
+  from: number;
+  to: number;
+  onItemsPerPageChange: (itemsPerPage: number) => void;
 }
 
 const DataTableComponent: React.FC<DataTableComponentProps> = ({
   title,
   items,
-  columns,
   page,
   itemsPerPage,
   setPage,
@@ -27,6 +25,8 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
   to,
   onItemsPerPageChange,
 }) => {
+  const columns = items.length > 0 ? Object.keys(items[0]) : [];
+
   return (
     <View
       style={{
@@ -42,7 +42,6 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
         height: HEIGHT * 0.3,
         margin: 5,
       }}>
-      {/* Header for Table */}
       <Text
         style={{
           alignSelf: 'center',
@@ -54,41 +53,86 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
         {title}
       </Text>
 
-      {/* DataTable */}
-      <DataTable>
-        <DataTable.Header>
-          {columns.map((col, index) => (
-            <DataTable.Title key={index} numeric={index !== 0}>
-              {col}
-            </DataTable.Title>
-          ))}
-        </DataTable.Header>
+      {/* Check if data is available */}
+      {items.length === 0 ? (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: HEIGHT * 0.2,
+          }}>
+          <Text style={{fontSize: 16, color: '#999'}}>No Data Found</Text>
+        </View>
+      ) : (
+        <ScrollView horizontal>
+          <DataTable style={{borderWidth: 1, borderColor: '#ddd'}}>
+            {/* Table Header */}
+            <DataTable.Header
+              style={{
+                borderBottomWidth: 2,
+                borderBottomColor: '#000',
+                backgroundColor: '#f4f4f4',
+              }}>
+              {columns.map((col, index) => (
+                <DataTable.Title
+                  key={index}
+                  numeric={index !== 0}
+                  style={{
+                    borderRightWidth: 1,
+                    borderRightColor: '#ddd',
+                    padding: 10,
+                    width: 120, // Ensure all columns have a fixed width
+                    textAlign: 'center', // Center align the text in headers
+                  }}>
+                  {col.replace(/_/g, ' ')} {/* Column name formatting */}
+                </DataTable.Title>
+              ))}
+            </DataTable.Header>
 
-        {items.slice(from, to).map((item, index) => (
-          <DataTable.Row key={index}>
-            {columns.map((col, colIndex) => (
-              <DataTable.Cell key={colIndex} numeric={colIndex !== 0}>
-                {item[col.toLowerCase()]}{' '}
-                {/* Dynamically display based on column name */}
-              </DataTable.Cell>
+            {/* Table Rows */}
+            {items.slice(from, to).map((item, rowIndex) => (
+              <DataTable.Row
+                key={rowIndex}
+                style={{
+                  borderBottomWidth: 1,
+                  borderBottomColor: '#ddd',
+                  backgroundColor: rowIndex % 2 === 0 ? '#fafafa' : 'white', // Alternate row color for readability
+                }}>
+                {columns.map((col, colIndex) => (
+                  <DataTable.Cell
+                    key={colIndex}
+                    numeric={colIndex !== 0}
+                    style={{
+                      borderRightWidth: 1,
+                      borderRightColor: '#ddd',
+                      padding: 10,
+                      width: 120, // Ensure all cells have the same fixed width
+                      textAlign: 'center', // Center align the text in cells
+                    }}>
+                    {String(item[col] ?? '-')}{' '}
+                  </DataTable.Cell>
+                ))}
+              </DataTable.Row>
             ))}
-          </DataTable.Row>
-        ))}
+          </DataTable>
+        </ScrollView>
+      )}
 
-        {/* Pagination */}
+      {/* Pagination */}
+      {items.length > 0 && (
         <DataTable.Pagination
           page={page}
           numberOfPages={Math.ceil(items.length / itemsPerPage)}
-          onPageChange={newPage => setPage(newPage)}
+          onPageChange={setPage}
           label={`${from + 1}-${to} of ${items.length}`}
           numberOfItemsPerPage={itemsPerPage}
           onItemsPerPageChange={onItemsPerPageChange}
           showFastPaginationControls
           selectPageDropdownLabel={'Rows per page'}
         />
-      </DataTable>
+      )}
 
-      {/* Spacing Below */}
       <View style={{height: 50}} />
     </View>
   );

@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {Dropdown} from 'react-native-element-dropdown';
 import {StyleSheet, Text, View} from 'react-native';
+import {GRAY} from '../../constants/color';
 
 const DropdownComponent = ({data, value, onChange}) => {
   const [isFocus, setIsFocus] = useState(false);
@@ -8,9 +9,7 @@ const DropdownComponent = ({data, value, onChange}) => {
   return (
     <View style={styles.container}>
       {value || isFocus ? (
-        <Text style={[styles.label, isFocus && {color: 'blue'}]}>
-          Dropdown label
-        </Text>
+        <Text style={[styles.label, isFocus && {color: 'blue'}]}>Select</Text>
       ) : null}
       <Dropdown
         style={[styles.dropdown, isFocus && {borderColor: 'blue'}]}
@@ -61,12 +60,15 @@ const styles = StyleSheet.create({
     zIndex: 999,
     paddingHorizontal: 8,
     fontSize: 11,
+    color: 'black',
   },
   placeholderStyle: {
     fontSize: 16,
+    color: GRAY,
   },
   selectedTextStyle: {
     fontSize: 16,
+    color: 'black',
   },
   iconStyle: {
     width: 20,

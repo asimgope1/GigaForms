@@ -9,9 +9,9 @@ import {
   View,
 } from 'react-native';
 import React, {Fragment, useState} from 'react';
-import {HEIGHT, MyStatusBar} from '../../constants/config';
+import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {splashStyles} from '../Splash/SplashStyles';
-import {DARKGREEN} from '../../constants/color';
+import {BLACK, DARKGREEN} from '../../constants/color';
 import TitleHeader from './TitleHeader';
 import DropdownComponent from './DropdownComponent';
 import {IconButton} from 'react-native-paper'; // Import IconButton
@@ -46,6 +46,8 @@ const Forms = ({navigation}) => {
   // Function for the right button click
   const handleRightButtonClick = () => {
     console.log('Right button clicked!');
+    navigation.navigate('Forms Templates');
+
     // Add your custom functionality here
   };
 
@@ -234,7 +236,7 @@ const Forms = ({navigation}) => {
           <TouchableOpacity
             style={[styless.button, {backgroundColor: 'blue'}]}
             onPress={() => alert('Edit')}>
-            <Text style={styless.buttonText}>Edit</Text>
+            <Text style={styless.buttonText}>View</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styless.button, {backgroundColor: 'red'}]}
@@ -268,6 +270,7 @@ const Forms = ({navigation}) => {
           <DropdownComponent data={data} value={value} onChange={setValue} />
           <TextInput
             style={styless.input}
+            placeholderTextColor={BLACK}
             placeholder="Search..."
             value={searchText}
             onChangeText={setSearchText}
@@ -357,6 +360,7 @@ const styless = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 12,
     fontSize: 16,
+    color: BLACK,
   },
   iconButton: {
     backgroundColor: 'white',
@@ -371,13 +375,16 @@ const styless = StyleSheet.create({
   },
   itemContainer: {
     backgroundColor: '#fff',
-    padding: 16,
-    marginBottom: 16,
+    padding: 14,
+    width: WIDTH * 0.95,
+    marginBottom: 20,
     borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 8,
+    elevation: 4,
+    margin: 8,
   },
   text: {
     fontSize: 14,

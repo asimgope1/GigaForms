@@ -1,6 +1,6 @@
 export const LIGHT = 'Poppins-Light';
-export const REGULAR = 'Inter-Regular';
-export const MEDIUM = 'Inter-Medium';
+export const REGULAR = 'Poppins-Regular';
+export const MEDIUM = 'Poppins-Medium';
 export const BOLD = 'Poppins-Black';
 export const EXTRABOLD = 'Poppins-ExtraBold';
-export const SEMIBOLD = 'Inter-SemiBold';
+export const SEMIBOLD = 'Poppins-SemiBold';

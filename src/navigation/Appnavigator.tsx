@@ -7,8 +7,10 @@ import LoginStack from './LoginStack';
 const Appnavigator = () => {
   const dispatch = useDispatch();
   dispatch(checkuserToken());
-  const authStatus = useSelector(state => state.authStatus);
-  return true ? <HomeStack /> : <LoginStack />;
+  const authStatus = useSelector(
+    (state: {authStatus: boolean}) => state.authStatus,
+  );
+  return authStatus ? <HomeStack /> : <LoginStack />;
 };
 
 export default Appnavigator;

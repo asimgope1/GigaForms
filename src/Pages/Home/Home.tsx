@@ -1,11 +1,10 @@
-import React, {Fragment, useState} from 'react';
+import React, {Fragment, useEffect, useState} from 'react';
 import {
   StyleSheet,
   Platform,
   StatusBar,
   SafeAreaView,
   View,
-  Pressable,
   FlatList,
   Text,
   ScrollView,
@@ -13,18 +12,25 @@ import {
 import LinearGradient from 'react-native-linear-gradient'; // Gradient for Background
 import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {WHITE, DARKGREEN, GREEN, GRAY} from '../../constants/color';
-import {Avatar, Icon} from 'react-native-paper';
 import {splashStyles} from '../Splash/SplashStyles';
 import {RefreshControl} from 'react-native-gesture-handler';
 import {NavigationProp, DrawerActions} from '@react-navigation/native';
 import {RFPercentage} from 'react-native-responsive-fontsize';
 import DataTableComponent from './DataTableComponent';
+import Toast from 'react-native-toast-message';
+import {BASE_URL} from '../../constants/url';
+import {GETNETWORK} from '../../utils/Network';
+import {Icon} from 'react-native-elements';
+import TitleHeader from '../Forms/TitleHeader';
+import {SEMIBOLD} from '../../constants/fontfamily';
+import {Loader} from '../../components/Loader';
 
 // Define type for item
 type Item = {
   id: number;
   name: string;
   age: number;
+  icon: string;
 };
 
 // Define Props for Home component
@@ -33,7 +39,7 @@ interface HomeProps {
 }
 
 // Function to get dynamic gradient colors based on ID
-const getGradient = (id: number) => {
+const getGradient = (state: number) => {
   const gradients = [
     ['#FF5733', '#FF8D1A'], // Red-Orange
     ['#33B5E5', '#0099CC'], // Blue
@@ -42,29 +48,39 @@ const getGradient = (id: number) => {
     ['#9C27B0', '#673AB7'], // Purple
     ['#607D8B', '#455A64'], // Gray
   ];
-  return gradients[id % gradients.length]; // Rotate gradients
+  return gradients[state % gradients.length]; // Rotate gradients based on `state`
+};
+
+const getIcons = () => {
+  const icons = [
+    {name: 'book', color: WHITE},
+    {name: 'graduation-cap', color: WHITE},
+  ];
+  return icons[page % icons.length]; // Rotate icons based on `page`
 };
 
 // RenderBox Component with platform-specific shadow and avatar
+
 const RenderBox: React.FC<{item: Item}> = ({item}) => (
   <View style={styles.box}>
     {/* Box Icon with Gradient */}
     <LinearGradient
-      colors={getGradient(item.id)}
+      colors={getGradient(item.state)} // Ensure `state` is used dynamically
       style={styles.BoxIcon}
       start={{x: 0, y: 0}}
       end={{x: 1, y: 1}}>
-      <Avatar.Icon
-        size={40}
-        icon="form-select"
+      <Icon
+        size={30}
+        type="font-awesome"
+        name="book" // Dynamically set icon
         color={WHITE}
-        style={{backgroundColor: 'transparent'}}
+        // style={{backgroundColor: 'transparent'}}
       />
     </LinearGradient>
 
     {/* Box Details */}
     <View style={styles.BoxDetails}>
-      <Text style={[styles.boxText]}>{item.age}</Text>
+      <Text style={[styles.boxText]}>{item.value}</Text>
       <Text style={styles.boxText1}>{item.name}</Text>
     </View>
   </View>
@@ -72,16 +88,30 @@ const RenderBox: React.FC<{item: Item}> = ({item}) => (
 
 // Home Component
 const Home: React.FC<HomeProps> = ({navigation}) => {
-  const DATA: Item[] = [
-    {id: 1, name: 'Total Applied', age: 25},
-    {id: 2, name: 'Department Rejected', age: 30},
-    {id: 3, name: 'Submit IR', age: 28},
-    {id: 4, name: 'Confirm Medical Test', age: 27},
-    {id: 5, name: 'Total Gatepass', age: 26},
-  ];
-
   const [page, setPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [Token, setToken] = useState();
+  const [DashboardItems, setDashboardItems] = useState();
+  const [refreshing, Setrefreshing] = useState(false);
+
+  useEffect(() => {
+    // const RetriveDetails = async () => {
+    //   const token = await getObjByKey('loginResponse');
+    //   setToken(token.access);
+    //   console.log('tokennnow token', token);
+    // };
+    // RetriveDetails();
+    GetDashboard();
+  }, []);
+  const GetDashboard = () => {
+    Setrefreshing(true);
+    const url = `${BASE_URL}dashboard/`;
+    GETNETWORK(url, true).then(response => {
+      console.log('response', response);
+      setDashboardItems(response.dashboard_details);
+      Setrefreshing(false);
+    });
+  };
 
   const items = [
     {
@@ -121,109 +151,52 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
 
   const from = page * itemsPerPage;
   const to = Math.min(from + itemsPerPage, items.length);
+  console.log('dataset', DashboardItems);
   return (
     <Fragment>
       <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
-      <SafeAreaView
-        style={[
-          splashStyles.maincontainer,
-          {
-            // paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,ß
-          },
-        ]}>
+      <SafeAreaView style={[splashStyles.maincontainer]}>
         {/* App Bar */}
-        <View style={styles.appbar}>
-          <Pressable
-            onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
-            <Icon
-              size={40}
-              source="microsoft-xbox-controller-menu"
-              color="white"
-            />
-          </Pressable>
-          <Text style={styles.appbarText}>OverView</Text>
-        </View>
+        <TitleHeader
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          title="Dashboard"
+          left={WIDTH * 0.36}
+          icon="menu-open"
+          size={RFPercentage(5)}
+        />
 
         {/* Scrollable Content */}
         <ScrollView
-          refreshControl={<RefreshControl refreshing={false} />}
+          refreshControl={
+            <RefreshControl onRefresh={GetDashboard} refreshing={refreshing} />
+          }
           contentContainerStyle={styles.container}>
           <FlatList
-            data={DATA}
-            renderItem={({item}) => <RenderBox item={item} />}
-            keyExtractor={item => item.id.toString()}
+            data={DashboardItems}
+            renderItem={({item}) =>
+              item.type === 'Card' ? (
+                <RenderBox item={item} />
+              ) : item.type === 'Table' ? (
+                <DataTableComponent
+                  title={item.name} // Use dynamic title from the item
+                  items={item.value || []} // Ensure it fetches the correct data
+                  columns={columns} // Assuming all tables share the same column format
+                  page={page}
+                  itemsPerPage={itemsPerPage}
+                  setPage={setPage}
+                  from={from}
+                  to={to}
+                  onItemsPerPageChange={setItemsPerPage}
+                />
+              ) : null
+            }
+            keyExtractor={(item, index) => index.toString()} // Ensure unique keys
             scrollEnabled={false} // Prevent scroll conflicts inside ScrollView
-          />
-
-          {/* <DataTable columns={columns} data={data} /> */}
-          <DataTableComponent
-            title="List to Confirm for Training"
-            items={items}
-            columns={columns}
-            page={page}
-            itemsPerPage={itemsPerPage}
-            setPage={setPage}
-            from={from}
-            to={to}
-            onItemsPerPageChange={setItemsPerPage}
-          />
-          <DataTableComponent
-            title="List to Confirm for Test Slot"
-            items={items}
-            columns={columns}
-            page={page}
-            itemsPerPage={itemsPerPage}
-            setPage={setPage}
-            from={from}
-            to={to}
-            onItemsPerPageChange={setItemsPerPage}
-          />
-          <DataTableComponent
-            title="List to Submit IR Documents"
-            items={items}
-            columns={columns}
-            page={page}
-            itemsPerPage={itemsPerPage}
-            setPage={setPage}
-            from={from}
-            to={to}
-            onItemsPerPageChange={setItemsPerPage}
-          />
-          <DataTableComponent
-            title="List to Confirm HR Verification"
-            items={items}
-            columns={columns}
-            page={page}
-            itemsPerPage={itemsPerPage}
-            setPage={setPage}
-            from={from}
-            to={to}
-            onItemsPerPageChange={setItemsPerPage}
-          />
-          <DataTableComponent
-            title="List of gatepass Pending"
-            items={items}
-            columns={columns}
-            page={page}
-            itemsPerPage={itemsPerPage}
-            setPage={setPage}
-            from={from}
-            to={to}
-            onItemsPerPageChange={setItemsPerPage}
-          />
-          <DataTableComponent
-            title="List of gatepass Released"
-            items={items}
-            columns={columns}
-            page={page}
-            itemsPerPage={itemsPerPage}
-            setPage={setPage}
-            from={from}
-            to={to}
-            onItemsPerPageChange={setItemsPerPage}
           />
         </ScrollView>
       </SafeAreaView>
+      <Toast />
+      <Loader visible={refreshing} />
     </Fragment>
   );
 };
@@ -239,23 +212,10 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: WHITE,
+    alignSelf: 'center',
     alignItems: 'center',
     // justifyContent: 'center',
     paddingVertical: 20,
-  },
-  appbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: DARKGREEN,
-    height: HEIGHT * 0.08,
-    paddingHorizontal: 15,
-  },
-  appbarText: {
-    color: WHITE,
-    fontSize: 20,
-    fontWeight: 'bold',
-    position: 'absolute',
-    left: '45%',
   },
   box: {
     width: WIDTH * 0.9,
@@ -268,6 +228,7 @@ const styles = StyleSheet.create({
     padding: 15,
     marginVertical: 10,
     borderRadius: 10,
+    alignSelf: 'center',
 
     // Cross-platform shadow
     ...Platform.select({
@@ -297,12 +258,12 @@ const styles = StyleSheet.create({
   },
   boxText: {
     fontSize: RFPercentage(2),
-    fontWeight: '600',
+    fontFamily: SEMIBOLD,
     color: GREEN,
   },
   boxText1: {
     fontSize: RFPercentage(1.25),
-    fontWeight: '600',
+    fontFamily: SEMIBOLD,
     color: GRAY,
   },
 });
