@@ -17,12 +17,12 @@ import {RefreshControl} from 'react-native-gesture-handler';
 import {NavigationProp, DrawerActions} from '@react-navigation/native';
 import {RFPercentage} from 'react-native-responsive-fontsize';
 import DataTableComponent from './DataTableComponent';
-import Toast from 'react-native-toast-message';
+import Toast, {BaseToast} from 'react-native-toast-message';
 import {BASE_URL} from '../../constants/url';
 import {GETNETWORK} from '../../utils/Network';
 import {Icon} from 'react-native-elements';
 import TitleHeader from '../Forms/TitleHeader';
-import {SEMIBOLD} from '../../constants/fontfamily';
+import {BOLD, SEMIBOLD} from '../../constants/fontfamily';
 import {Loader} from '../../components/Loader';
 
 // Define type for item
@@ -59,6 +59,25 @@ const getIcons = () => {
   return icons[page % icons.length]; // Rotate icons based on `page`
 };
 
+const formatDateTime = (isoString: string) => {
+  const dateObj = new Date(isoString);
+
+  const formattedDate = dateObj.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const formattedTime = dateObj.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true, // Converts to 12-hour format with AM/PM
+  });
+
+  return `${formattedDate}, ${formattedTime}`;
+};
+
 // RenderBox Component with platform-specific shadow and avatar
 
 const RenderBox: React.FC<{item: Item}> = ({item}) => (
@@ -86,6 +105,32 @@ const RenderBox: React.FC<{item: Item}> = ({item}) => (
   </View>
 );
 
+const RenderBox2: React.FC<{item: Item}> = ({item}) => (
+  <View style={styles.box}>
+    {/* Box Icon with Gradient */}
+    <LinearGradient
+      colors={getGradient(item.id)} // Ensure `state` is used dynamically
+      style={styles.BoxIcon}
+      start={{x: 0, y: 0}}
+      end={{x: 1, y: 1}}>
+      <Icon
+        size={25}
+        type="font-awesome"
+        name="book" // Dynamically set icon
+        color={WHITE}
+        // style={{backgroundColor: 'transparent'}}
+      />
+    </LinearGradient>
+
+    {/* Box Details */}
+    <View style={styles.BoxDetails}>
+      <Text style={[styles.boxText]}>{item.data_count}</Text>
+      <Text style={styles.boxText2}>{item.description}</Text>
+      <Text style={styles.boxText2}>{formatDateTime(item.date_updated)}</Text>
+    </View>
+  </View>
+);
+
 // Home Component
 const Home: React.FC<HomeProps> = ({navigation}) => {
   const [page, setPage] = useState(0);
@@ -94,63 +139,75 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
   const [DashboardItems, setDashboardItems] = useState();
   const [refreshing, Setrefreshing] = useState(false);
 
-  useEffect(() => {
-    // const RetriveDetails = async () => {
-    //   const token = await getObjByKey('loginResponse');
-    //   setToken(token.access);
-    //   console.log('tokennnow token', token);
-    // };
-    // RetriveDetails();
-    GetDashboard();
-  }, []);
-  const GetDashboard = () => {
-    Setrefreshing(true);
-    const url = `${BASE_URL}dashboard/`;
-    GETNETWORK(url, true).then(response => {
-      console.log('response', response);
-      setDashboardItems(response.dashboard_details);
-      Setrefreshing(false);
+  const showToast = (type, title, message) => {
+    Toast.show({
+      type: type,
+      text1: title,
+      text2: message,
+      position: 'bottom',
+      visibilityTime: 3000,
+      autoHide: true,
+      topOffset: 50,
     });
   };
 
-  const items = [
-    {
-      key: 1,
-      name: 'Chocolate Cake',
-      calories: 400,
-      fat: 25,
-      sugar: 50,
-      protein: 10,
-      carbs: 60,
-      vitamin: 'A',
-      water: '50%',
-    },
-    {
-      key: 2,
-      name: 'Ice Cream',
-      calories: 300,
-      fat: 15,
-      sugar: 30,
-      protein: 5,
-      carbs: 45,
-      vitamin: 'B',
-      water: '60%',
-    },
-    // ... more items
-  ];
+  useEffect(() => {
+    GetDashboard();
+  }, []); // Empty array means it runs once when the component mounts
 
-  const columns = [
-    'Calories',
-    'Fat',
-    'Sugar',
-    'Protein',
-    'Carbs',
-    'Vitamin',
-    'Water',
-  ];
+  const GetDashboard = async () => {
+    Setrefreshing(true); // Start loading
+    const url = `${BASE_URL}dashboard/`;
+
+    try {
+      const response = await GETNETWORK(url, true);
+
+      if (!response || response.status === 504) {
+        throw new Error('Server timeout (504). Please try again later.');
+      }
+
+      console.log(
+        'Dashboard details length:',
+        response?.dashboard_details?.length,
+      );
+
+      // If no dashboard details or empty array, call the forms API
+      if (
+        !response.dashboard_details ||
+        response.dashboard_details.length === 0
+      ) {
+        const urll = `${BASE_URL}forms/`;
+        const responsee = await GETNETWORK(urll, true);
+
+        if (!responsee || responsee.status === 504) {
+          throw new Error('Server timeout (504). Please try again later.');
+        } else {
+          setDashboardItems(responsee.data); // Set data from forms API
+          Setrefreshing(false);
+          showToast('success', 'DashBoard Update Successfully', '');
+        }
+      } else {
+        // If there are dashboard details, set the dashboard data
+        setDashboardItems(response.dashboard_details);
+        Setrefreshing(false);
+        showToast('success', 'DashBoard Update Successfully', '');
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard:', error.message);
+      Setrefreshing(false);
+      alert(
+        `Network Error: ${
+          error.message ||
+          'Something went wrong. Please check your internet connection and try again.'
+        }`,
+      );
+      showToast('error', 'DashBoard Update Successful', `${error.message}`);
+    } finally {
+      Setrefreshing(false); // Stop loading
+    }
+  };
 
   const from = page * itemsPerPage;
-  const to = Math.min(from + itemsPerPage, items.length);
   console.log('dataset', DashboardItems);
   return (
     <Fragment>
@@ -173,6 +230,7 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
           contentContainerStyle={styles.container}>
           <FlatList
             data={DashboardItems}
+            ListFooterComponent={<View style={styles.footer}></View>}
             renderItem={({item}) =>
               item.type === 'Card' ? (
                 <RenderBox item={item} />
@@ -180,15 +238,15 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
                 <DataTableComponent
                   title={item.name} // Use dynamic title from the item
                   items={item.value || []} // Ensure it fetches the correct data
-                  columns={columns} // Assuming all tables share the same column format
                   page={page}
                   itemsPerPage={itemsPerPage}
                   setPage={setPage}
                   from={from}
-                  to={to}
                   onItemsPerPageChange={setItemsPerPage}
                 />
-              ) : null
+              ) : (
+                <RenderBox2 item={item} />
+              )
             }
             keyExtractor={(item, index) => index.toString()} // Ensure unique keys
             scrollEnabled={false} // Prevent scroll conflicts inside ScrollView
@@ -265,5 +323,16 @@ const styles = StyleSheet.create({
     fontSize: RFPercentage(1.25),
     fontFamily: SEMIBOLD,
     color: GRAY,
+  },
+  boxText2: {
+    fontSize: RFPercentage(1.25),
+    fontFamily: BOLD,
+    color: GRAY,
+  },
+  footer: {
+    height: 10,
+    backgroundColor: WHITE,
+    width: WIDTH,
+    marginBottom: 10,
   },
 });

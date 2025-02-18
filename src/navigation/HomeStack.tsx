@@ -9,15 +9,18 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Home from '../Pages/Home/Home';
 import Profile from '../Pages/Profile/Profile';
 import {Icon} from 'react-native-paper';
-import {GREEN} from '../constants/color';
+import {DARKGREEN, GREEN} from '../constants/color';
 import Forms from '../Pages/Forms/Forms';
 import FormsTemplates from '../Pages/Forms/FormsTemplates';
-import {clearAll} from '../utils/Storage';
+import {clearAll, storeObjByKey} from '../utils/Storage';
 import {checkuserToken} from '../redux/actions/auth';
 import {useDispatch} from 'react-redux';
 import CreateUser from '../Pages/CreateUser/CreateUser';
 import {BASE_URL} from '../constants/url';
 import {GETNETWORK} from '../utils/Network';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {MyStatusBar} from '../constants/config';
+import {splashStyles} from '../Pages/Splash/SplashStyles';
 
 // Define Stack and Drawer Navigators
 const Stack = createNativeStackNavigator();
@@ -42,9 +45,11 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
     try {
       const url = `${BASE_URL}user/profile/`;
       const response = await GETNETWORK(url, true); // Assuming GETNETWORK is an async function
-      console.log('response', response);
+      console.log('userresponse', response);
+
       SetLoading(false); // Hide loader after successful API call
       setUserDetails(response); // Set user details from API response
+      storeObjByKey('user', response); //
     } catch (error) {
       SetLoading(false);
       console.error('Error fetching profile data:', error);
@@ -52,94 +57,107 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
     }
   };
   return (
-    <DrawerContentScrollView contentContainerStyle={styles.drawerContainer}>
-      {/* Profile Section */}
-      <View style={styles.profileSection}>
-        <Image
-          // source={{uri: 'https://randomuser.me/api/portraits/men/50.jpg'}} // Replace with dynamic user image
-          style={styles.profileImage}
-        />
-        <Text style={styles.profileName}>{userDetails?.name}</Text>
-      </View>
-
-      {/* Drawer Items */}
-      <TouchableOpacity
-        style={styles.drawerItem}
-        onPress={() => navigation.navigate('Home')}>
-        <Icon source="home-outline" size={24} color={GREEN} />
-        <Text style={styles.drawerItemText}>Home</Text>
-      </TouchableOpacity>
-      {/* Registration Item with Subitems */}
-      <TouchableOpacity
-        style={styles.drawerItem}
-        onPress={() => setShowRegistrationSubItems(!showRegistrationSubItems)}>
-        <Icon source="account-plus-outline" size={24} color={GREEN} />
-        <Text style={styles.drawerItemText}>Registration</Text>
-      </TouchableOpacity>
-      {showRegistrationSubItems && (
-        <>
-          <TouchableOpacity
-            style={styles.drawerSubItem}
-            onPress={() => navigation.navigate('Forms')}>
-            <Icon
-              source="card-account-details-outline"
-              size={24}
-              color={GREEN}
+    <>
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle={'dark-content'} />
+      <SafeAreaView style={splashStyles.maincontainer}>
+        <DrawerContentScrollView contentContainerStyle={styles.drawerContainer}>
+          {/* Profile Section */}
+          <View style={styles.profileSection}>
+            <Image
+              // source={{uri: 'https://randomuser.me/api/portraits/men/50.jpg'}} // Replace with dynamic user image
+              style={styles.profileImage}
             />
-            <Text style={styles.drawerItemText}>Gate Pass Registration</Text>
-          </TouchableOpacity>
-        </>
-      )}
+            <Text style={styles.profileName}>{userDetails?.name}</Text>
+          </View>
 
-      {/* Approval Item with Subitems */}
-      <TouchableOpacity
-        style={styles.drawerItem}
-        onPress={() => setShowApprovalSubItems(!showApprovalSubItems)}>
-        <Icon source="sticker-check-outline" size={24} color={GREEN} />
-        <Text style={styles.drawerItemText}>Approval</Text>
-      </TouchableOpacity>
-      {showApprovalSubItems && (
-        <>
+          {/* Drawer Items */}
           <TouchableOpacity
-            style={styles.drawerSubItem}
-            onPress={() => navigation.navigate('SubApproval1')}>
-            <Icon source="folder-check-outline" size={24} color={GREEN} />
-            <Text style={styles.drawerItemText}>Sub Approval 1</Text>
+            style={styles.drawerItem}
+            onPress={() => navigation.navigate('Home')}>
+            <Icon source="home-outline" size={24} color={GREEN} />
+            <Text style={styles.drawerItemText}>Home</Text>
           </TouchableOpacity>
+          {/* Registration Item with Subitems */}
           <TouchableOpacity
-            style={styles.drawerSubItem}
-            onPress={() => navigation.navigate('SubApproval2')}>
-            <Icon source="folder-check-outline" size={24} color={GREEN} />
-            <Text style={styles.drawerItemText}>Sub Approval 2</Text>
+            style={styles.drawerItem}
+            onPress={() =>
+              setShowRegistrationSubItems(!showRegistrationSubItems)
+            }>
+            <Icon source="account-plus-outline" size={24} color={GREEN} />
+            <Text style={styles.drawerItemText}>Registration</Text>
           </TouchableOpacity>
-        </>
-      )}
+          {showRegistrationSubItems && (
+            <>
+              <TouchableOpacity
+                style={styles.drawerSubItem}
+                onPress={() => navigation.navigate('Forms')}>
+                <Icon
+                  source="card-account-details-outline"
+                  size={24}
+                  color={GREEN}
+                />
+                <Text style={styles.drawerItemText}>
+                  Gate Pass Registration
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
 
-      <TouchableOpacity
-        style={styles.drawerItem}
-        onPress={() => navigation.navigate('Profile')}>
-        <Icon source="account-outline" size={24} color={GREEN} />
-        <Text style={styles.drawerItemText}>Profile</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.drawerItem}
-        onPress={() => navigation.navigate('Create-User')}>
-        <Icon source="account-plus" size={24} color={GREEN} />
-        <Text style={styles.drawerItemText}>Create User</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.logout}
-        onPress={() => {
-          // alert asking for confirmation to logout
-          alert('Are you sure you want to logout?');
-          clearAll();
-          dispacth(checkuserToken());
-          // Implement logout logic here
-        }}>
-        <Icon source="logout" size={24} color={GREEN} />
-        <Text style={styles.drawerItemText}>Logout</Text>
-      </TouchableOpacity>
-    </DrawerContentScrollView>
+          {/* Approval Item with Subitems */}
+          <TouchableOpacity
+            style={styles.drawerItem}
+            onPress={() => setShowApprovalSubItems(!showApprovalSubItems)}>
+            <Icon source="sticker-check-outline" size={24} color={GREEN} />
+            <Text style={styles.drawerItemText}>Approval</Text>
+          </TouchableOpacity>
+          {showApprovalSubItems && (
+            <>
+              <TouchableOpacity
+                style={styles.drawerSubItem}
+                onPress={() => navigation.navigate('SubApproval1')}>
+                <Icon source="folder-check-outline" size={24} color={GREEN} />
+                <Text style={styles.drawerItemText}>Sub Approval 1</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.drawerSubItem}
+                onPress={() => navigation.navigate('SubApproval2')}>
+                <Icon source="folder-check-outline" size={24} color={GREEN} />
+                <Text style={styles.drawerItemText}>Sub Approval 2</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          <TouchableOpacity
+            style={styles.drawerItem}
+            onPress={() => navigation.navigate('Profile')}>
+            <Icon source="account-outline" size={24} color={GREEN} />
+            <Text style={styles.drawerItemText}>Profile</Text>
+          </TouchableOpacity>
+          {userDetails?.is_superuser === true ? (
+            <TouchableOpacity
+              style={styles.drawerItem}
+              onPress={() => navigation.navigate('Create-User')}>
+              <Icon source="account-plus" size={24} color={GREEN} />
+              <Text style={styles.drawerItemText}>Create User</Text>
+            </TouchableOpacity>
+          ) : (
+            <></>
+          )}
+          <TouchableOpacity
+            style={styles.logout}
+            onPress={() => {
+              // alert asking for confirmation to logout
+              alert('Are you sure you want to logout?');
+              clearAll();
+              dispacth(checkuserToken());
+              // Implement logout logic here
+            }}>
+            <Icon source="logout" size={24} color={GREEN} />
+            <Text style={styles.drawerItemText}>Logout</Text>
+          </TouchableOpacity>
+        </DrawerContentScrollView>
+      </SafeAreaView>
+    </>
   );
 };
 
@@ -203,7 +221,7 @@ const MyDrawer: React.FC = () => {
 const styles = StyleSheet.create({
   drawerContainer: {
     flex: 1,
-    paddingTop: 50,
+    paddingTop: 40,
     backgroundColor: '#f5f5f5',
   },
   profileSection: {
@@ -238,7 +256,7 @@ const styles = StyleSheet.create({
   },
   logout: {
     width: '100%',
-    bottom: 20,
+    bottom: 100,
     position: 'absolute',
     flexDirection: 'row',
     alignItems: 'center',

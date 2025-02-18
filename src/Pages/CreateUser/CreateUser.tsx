@@ -17,8 +17,20 @@ import {BLACK, DARKGREEN, GRAY} from '../../constants/color';
 import TitleHeader from '../Forms/TitleHeader';
 import {Dropdown} from 'react-native-element-dropdown';
 
-const CreateUser = ({navigation}) => {
-  const [userData, setUserData] = useState(null);
+import {NavigationProp, RequestRedirect} from '@react-navigation/native';
+import {GETNETWORK} from '../../utils/Network';
+
+interface CreateUserProps {
+  navigation: NavigationProp<any>;
+}
+
+const CreateUser = ({navigation}: CreateUserProps) => {
+  interface UserData {
+    access: string;
+    // Add other properties if needed
+  }
+
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -49,7 +61,7 @@ const CreateUser = ({navigation}) => {
   // Function to retrieve data from AsyncStorage
   const fetchUserData = async () => {
     try {
-      const storedData = await AsyncStorage.getItem('loginDetails');
+      const storedData = await AsyncStorage.getItem('loginResponse');
       if (storedData) {
         const parsedData = JSON.parse(storedData);
         setUserData(parsedData);
@@ -76,44 +88,38 @@ const CreateUser = ({navigation}) => {
     console.log('userData.access', userData?.access);
 
     const fetchDropdownData = async () => {
-      const myHeaders = new Headers();
-      myHeaders.append('Accept', 'application/json');
-      myHeaders.append('Authorization', `Bearer ${userData.access}`);
-
-      const requestOptions = {
-        method: 'GET',
-        headers: myHeaders,
-        redirect: 'follow',
-      };
-
       try {
-        // Fetch dashboard items
-        const dashboardResponse = await fetch(
-          `${BASE_URL}/forms/custom_dashboard/`,
-          requestOptions,
+        // Fetch dashboard items using GETNETWORK
+        const dashboardData = await GETNETWORK(
+          `${BASE_URL}forms/custom_dashboard/`,
+          true,
         );
-        const dashboardData = await dashboardResponse.json();
         console.log('dashboardData', dashboardData);
-        const dashboardItems = dashboardData.results.map(item => ({
-          label: item.dashboard_name,
-          value: item.id,
-        }));
-        setDashboardItems(dashboardItems);
-        // Fetch group items
-        const groupResponse = await fetch(
-          `${BASE_URL}/forms/notification-groups/`,
-          requestOptions,
+        const dashboardItems = dashboardData.results.map(
+          (item: {dashboard_name: string; id: number}) => ({
+            label: item.dashboard_name,
+            value: item.id,
+          }),
         );
-        const groupData = await groupResponse.json();
+        setDashboardItems(dashboardItems);
+
+        // Fetch group items using GETNETWORK
+        const groupData = await GETNETWORK(
+          `${BASE_URL}forms/notification-groups/`,
+          true,
+        );
         console.log('groupData', groupData);
-        const groupItems = groupData.results.map(item => ({
-          label: item.group_name, // Use group_name as the label
-          value: item.id, // Use id as the value
-          template: item.template, // Use template as the
-        }));
+        const groupItems = groupData.results.map(
+          (item: {group_name: string; id: number; template: string}) => ({
+            label: item.group_name, // Use group_name as the label
+            value: item.id, // Use id as the value
+            template: item.template, // Use template as the value
+          }),
+        );
         setGroupItems(groupItems);
 
-        // Fetch value items
+        // Optionally, fetch other data or handle the value items as needed
+        // If needed, you can fetch value items here in a similar way
       } catch (error) {
         console.error('Error fetching dropdown data:', error);
       }
@@ -137,7 +143,7 @@ const CreateUser = ({navigation}) => {
 
     try {
       const valueResponse = await fetch(
-        `${BASE_URL}/forms/template/${temp}/alldata/`,
+        `${BASE_URL}forms/template/${temp}/alldata/`,
         requestOptions,
       );
       const valueData = await valueResponse.json();
@@ -163,7 +169,7 @@ const CreateUser = ({navigation}) => {
     // Define the base URL
 
     // Construct the URL dynamically
-    const Url = `${BASE_URL}/VerifyUser`;
+    const Url = `${BASE_URL}VerifyUser`;
 
     // Log the details for debugging
     console.log('Creating user with the following details:');
@@ -196,7 +202,7 @@ const CreateUser = ({navigation}) => {
     try {
       // Calling the API with fetch
       const response = await fetch(
-        `${BASE_URL}/user/internal/register/?redirect_url=${Url}`,
+        `${BASE_URL}user/internal/register/?redirect_url=${Url}`,
         {
           method: 'POST',
           headers: {
@@ -245,13 +251,14 @@ const CreateUser = ({navigation}) => {
         <TitleHeader
           title="Create-User"
           onPress={() => navigation.goBack()}
-          left={WIDTH * 0.38}
+          // left={WIDTH * 0.15}
         />
         <ScrollView style={styles.container}>
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Username</Text>
             <TextInput
               style={styles.input}
+              placeholderTextColor={GRAY}
               placeholder="Enter username"
               value={username}
               onChangeText={setUsername}
@@ -262,6 +269,7 @@ const CreateUser = ({navigation}) => {
             <Text style={styles.label}>Email</Text>
             <TextInput
               style={styles.input}
+              placeholderTextColor={GRAY}
               placeholder="Enter email"
               value={email}
               onChangeText={setEmail}
@@ -273,6 +281,7 @@ const CreateUser = ({navigation}) => {
             <Text style={styles.label}>Phone</Text>
             <TextInput
               style={styles.input}
+              placeholderTextColor={GRAY}
               placeholder="Enter phone number"
               value={phone}
               onChangeText={setPhone}
@@ -285,11 +294,7 @@ const CreateUser = ({navigation}) => {
             <View style={{...styles.inputContainer, flex: 1, zIndex: 1000}}>
               <Text style={styles.label}>Dashboard</Text>
               <Dropdown
-                data={[
-                  {label: 'Dashboard', value: 'Dashboard'},
-                  {label: 'Home', value: 'Home'},
-                  {label: 'Settings', value: 'Settings'},
-                ]}
+                data={dashboardItems}
                 style={styles.dropdownStyle}
                 placeholderStyle={styles.placeholderStyle}
                 inputSearchStyle={styles.inputSearchStyle}
@@ -319,11 +324,7 @@ const CreateUser = ({navigation}) => {
               }}>
               <Text style={styles.label}>Group Name</Text>
               <Dropdown
-                data={[
-                  {label: 'Dashboard', value: 'Dashboard'},
-                  {label: 'Home', value: 'Home'},
-                  {label: 'Settings', value: 'Settings'},
-                ]}
+                data={groupItems}
                 style={styles.dropdownStyle}
                 placeholderStyle={styles.placeholderStyle}
                 inputSearchStyle={styles.inputSearchStyle}
@@ -339,7 +340,7 @@ const CreateUser = ({navigation}) => {
                 searchPlaceholder="Search..."
                 value={dashboardValue}
                 onChange={item => {
-                  setDashboardValue(item.value);
+                  setGroupValue(item.value);
                 }}
               />
             </View>
@@ -490,6 +491,9 @@ const styles = StyleSheet.create({
   selectedTextStyle: {
     fontSize: 16,
     color: 'black',
+  },
+  searchPlaceholderTextColor: {
+    color: 'gray',
   },
 });
 

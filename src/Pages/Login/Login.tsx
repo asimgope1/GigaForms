@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, Fragment} from 'react';
 import {
   View,
   StyleSheet,
@@ -13,8 +13,8 @@ import {
 import {TextInput, Button, Text} from 'react-native-paper';
 import Toast from 'react-native-toast-message';
 import {LOGOZZ} from '../../constants/imagepath';
-import {GREEN, WHITE, BLACK} from '../../constants/color';
-import {WIDTH} from '../../constants/config';
+import {GREEN, WHITE, BLACK, DARKGREEN} from '../../constants/color';
+import {MyStatusBar, WIDTH} from '../../constants/config';
 import {POSTNETWORK} from '../../utils/Network';
 import {storeObjByKey} from '../../utils/Storage';
 import {BASE_URL} from '../../constants/url';
@@ -102,72 +102,75 @@ const Login = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.flexContainer}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled">
-          {/* Login Box */}
-          <Animated.View style={[styles.loginBox, {opacity: fadeAnim}]}>
-            {/* Animated Logo */}
-            <Animated.Image
-              source={LOGOZZ}
-              style={[styles.logo, {transform: [{scale: scaleAnim}]}]}
-            />
+    <Fragment>
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle="dark-content" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.flexContainer}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.container}
+            keyboardShouldPersistTaps="handled">
+            {/* Login Box */}
+            <Animated.View style={[styles.loginBox, {opacity: fadeAnim}]}>
+              {/* Animated Logo */}
+              <Animated.Image
+                source={LOGOZZ}
+                style={[styles.logo, {transform: [{scale: scaleAnim}]}]}
+              />
 
-            {/* Email Input */}
-            <TextInput
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              mode="outlined"
-              placeholder="Enter your email"
-              style={styles.input}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              textColor={BLACK}
-              outlineColor={GREEN}
-              activeOutlineColor={GREEN}
-            />
+              {/* Email Input */}
+              <TextInput
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                mode="outlined"
+                placeholder="Enter your email"
+                style={styles.input}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                textColor={BLACK}
+                outlineColor={GREEN}
+                activeOutlineColor={GREEN}
+              />
 
-            {/* Password Input */}
-            <TextInput
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              mode="outlined"
-              placeholder="Enter your password"
-              secureTextEntry
-              style={styles.input}
-              textColor={BLACK}
-              outlineColor={GREEN}
-              activeOutlineColor={GREEN}
-            />
+              {/* Password Input */}
+              <TextInput
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                mode="outlined"
+                placeholder="Enter your password"
+                secureTextEntry
+                style={styles.input}
+                textColor={BLACK}
+                outlineColor={GREEN}
+                activeOutlineColor={GREEN}
+              />
 
-            {/* Login Button with Loading */}
-            <Button
-              mode="contained"
-              onPress={handleLogin}
-              style={styles.button}
-              icon="login"
-              loading={loading}
-              disabled={loading}>
-              {loading ? 'Logging In...' : 'Login'}
-            </Button>
+              {/* Login Button with Loading */}
+              <Button
+                mode="contained"
+                onPress={handleLogin}
+                style={styles.button}
+                icon="login"
+                loading={loading}
+                disabled={loading}>
+                {loading ? 'Logging In...' : 'Login'}
+              </Button>
 
-            {/* Sign-up Option */}
-            <Text style={styles.signupText}>
-              Don't have an account?{' '}
-              <Text style={styles.signupLink}>Sign Up</Text>
-            </Text>
-          </Animated.View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-      <Toast />
-      <Loader visible={loading} />
-    </KeyboardAvoidingView>
+              {/* Sign-up Option */}
+              <Text style={styles.signupText}>
+                Don't have an account?{' '}
+                <Text style={styles.signupLink}>Sign Up</Text>
+              </Text>
+            </Animated.View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+        <Toast />
+        <Loader visible={loading} />
+      </KeyboardAvoidingView>
+    </Fragment>
   );
 };
 

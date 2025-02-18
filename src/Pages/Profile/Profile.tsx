@@ -17,6 +17,7 @@ import {BLACK, DARKGREEN, GRAY, WHITE} from '../../constants/color';
 import {BASE_URL} from '../../constants/url';
 import {GETNETWORK} from '../../utils/Network';
 import {Loader} from '../../components/Loader';
+import TitleHeader from '../Forms/TitleHeader';
 
 const Profile = ({navigation}: any) => {
   const [userDetails, setUserDetails] = useState<any>(null); // State for user details
@@ -83,12 +84,12 @@ const Profile = ({navigation}: any) => {
       <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
       <SafeAreaView style={styles.mainContainer}>
         {/* App Bar with Back Button */}
-        <View style={styles.appbar}>
-          <Pressable onPress={() => navigation.goBack()}>
-            <Icon source="arrow-left" size={30} color="white" />
-          </Pressable>
-          <Text style={styles.appbarText}>Profile</Text>
-        </View>
+        <TitleHeader
+          title="Profile"
+          onPress={() => {
+            navigation.goBack();
+          }}
+        />
 
         {/* Profile Content */}
         <View style={styles.container}>
