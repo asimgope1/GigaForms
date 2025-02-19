@@ -17,7 +17,11 @@ import {BLACK, DARKGREEN, GRAY} from '../../constants/color';
 import TitleHeader from '../Forms/TitleHeader';
 import {Dropdown} from 'react-native-element-dropdown';
 
-import {NavigationProp, RequestRedirect} from '@react-navigation/native';
+import {
+  NavigationProp,
+  RequestRedirect,
+  useFocusEffect,
+} from '@react-navigation/native';
 import {GETNETWORK} from '../../utils/Network';
 
 interface CreateUserProps {
@@ -73,6 +77,19 @@ const CreateUser = ({navigation}: CreateUserProps) => {
       console.error('Error fetching data from AsyncStorage:', error);
     }
   };
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserData();
+      setUsername('');
+      setEmail('');
+      setPhone('');
+      setIsSuperUser(false);
+      setDashboardValue(null);
+      setGroupValue(null);
+      setValueValue(null);
+      setFormValue(null);
+    }, []),
+  );
 
   useEffect(() => {
     fetchUserData();
@@ -147,6 +164,7 @@ const CreateUser = ({navigation}: CreateUserProps) => {
         requestOptions,
       );
       const valueData = await valueResponse.json();
+      console.log('valueData', valueData);
 
       // Check if valueData is an array before calling .map
       if (Array.isArray(valueData.data)) {
@@ -338,9 +356,15 @@ const CreateUser = ({navigation}: CreateUserProps) => {
                 valueField="value"
                 placeholder={'Select item'}
                 searchPlaceholder="Search..."
-                value={dashboardValue}
+                value={groupValue}
                 onChange={item => {
                   setGroupValue(item.value);
+                  console.log('item selected itw', item);
+                  GetValue(item.template);
+                }}
+                onConfirmSelectItem={item => {
+                  console.log('item selected', item);
+                  // GetValue(formValue)
                 }}
               />
             </View>
@@ -350,11 +374,7 @@ const CreateUser = ({navigation}: CreateUserProps) => {
             <View style={{...styles.inputContainer, flex: 1, zIndex: 800}}>
               <Text style={styles.label}>Show Value</Text>
               <Dropdown
-                data={[
-                  {label: 'Dashboard', value: 'Dashboard'},
-                  {label: 'Home', value: 'Home'},
-                  {label: 'Settings', value: 'Settings'},
-                ]}
+                data={ValueItems}
                 style={styles.dropdownStyle}
                 placeholderStyle={styles.placeholderStyle}
                 inputSearchStyle={styles.inputSearchStyle}
@@ -368,9 +388,9 @@ const CreateUser = ({navigation}: CreateUserProps) => {
                 valueField="value"
                 placeholder={'Select item'}
                 searchPlaceholder="Search..."
-                value={dashboardValue}
+                value={ValueValue}
                 onChange={item => {
-                  setDashboardValue(item.value);
+                  setValueValue(item.value);
                 }}
               />
             </View>
@@ -384,11 +404,7 @@ const CreateUser = ({navigation}: CreateUserProps) => {
               }}>
               <Text style={styles.label}>Show Form</Text>
               <Dropdown
-                data={[
-                  {label: 'Dashboard', value: 'Dashboard'},
-                  {label: 'Home', value: 'Home'},
-                  {label: 'Settings', value: 'Settings'},
-                ]}
+                data={formItems}
                 style={styles.dropdownStyle}
                 placeholderStyle={styles.placeholderStyle}
                 inputSearchStyle={styles.inputSearchStyle}
@@ -402,9 +418,9 @@ const CreateUser = ({navigation}: CreateUserProps) => {
                 valueField="value"
                 placeholder={'Select item'}
                 searchPlaceholder="Search..."
-                value={dashboardValue}
+                value={formValue}
                 onChange={item => {
-                  setDashboardValue(item.value);
+                  setFormValue(item.value);
                 }}
               />
             </View>

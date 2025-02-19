@@ -1,4 +1,4 @@
-import React, {Fragment, useEffect, useState} from 'react';
+import React, {Fragment, useEffect, useRef, useState} from 'react';
 import {
   StyleSheet,
   Platform,
@@ -8,10 +8,18 @@ import {
   FlatList,
   Text,
   ScrollView,
+  Animated,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient'; // Gradient for Background
 import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
-import {WHITE, DARKGREEN, GREEN, GRAY} from '../../constants/color';
+import {
+  WHITE,
+  DARKGREEN,
+  GREEN,
+  GRAY,
+  BLACK,
+  PURPLELIGHT,
+} from '../../constants/color';
 import {splashStyles} from '../Splash/SplashStyles';
 import {RefreshControl} from 'react-native-gesture-handler';
 import {NavigationProp, DrawerActions} from '@react-navigation/native';
@@ -80,30 +88,41 @@ const formatDateTime = (isoString: string) => {
 
 // RenderBox Component with platform-specific shadow and avatar
 
-const RenderBox: React.FC<{item: Item}> = ({item}) => (
-  <View style={styles.box}>
-    {/* Box Icon with Gradient */}
-    <LinearGradient
-      colors={getGradient(item.state)} // Ensure `state` is used dynamically
-      style={styles.BoxIcon}
-      start={{x: 0, y: 0}}
-      end={{x: 1, y: 1}}>
-      <Icon
-        size={30}
-        type="font-awesome"
-        name="book" // Dynamically set icon
-        color={WHITE}
-        // style={{backgroundColor: 'transparent'}}
-      />
-    </LinearGradient>
+const RenderBox: React.FC<{
+  item: any;
+  index: number;
+  scrollY: Animated.Value;
+}> = ({item, index, scrollY}) => {
+  // Interpolating size based on scroll
+  const scale = scrollY.interpolate({
+    inputRange: [0, 200], // Scroll range
+    outputRange: [1, 0.8], // Shrinks to 80%
+    extrapolate: 'clamp',
+  });
 
-    {/* Box Details */}
-    <View style={styles.BoxDetails}>
-      <Text style={[styles.boxText]}>{item.value}</Text>
-      <Text style={styles.boxText1}>{item.name}</Text>
-    </View>
-  </View>
-);
+  const opacity = scrollY.interpolate({
+    inputRange: [0, 200],
+    outputRange: [1, 0.5], // Reduces opacity while scrolling
+    extrapolate: 'clamp',
+  });
+
+  return (
+    <Animated.View style={[styles.box, {transform: [{scale}], opacity}]}>
+      <LinearGradient
+        colors={getGradient(index)}
+        style={styles.BoxIcon}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}>
+        <Icon size={30} type="font-awesome" name="book" color={WHITE} />
+      </LinearGradient>
+
+      <View style={styles.BoxDetails}>
+        <Text style={[styles.boxText]}>{item.value}</Text>
+        <Text style={styles.boxText1}>{item.name}</Text>
+      </View>
+    </Animated.View>
+  );
+};
 
 const RenderBox2: React.FC<{item: Item}> = ({item}) => (
   <View style={styles.box}>
@@ -138,6 +157,7 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
   const [Token, setToken] = useState();
   const [DashboardItems, setDashboardItems] = useState();
   const [refreshing, Setrefreshing] = useState(false);
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const showToast = (type, title, message) => {
     Toast.show({
@@ -208,7 +228,8 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
   };
 
   const from = page * itemsPerPage;
-  console.log('dataset', DashboardItems);
+  console.log('dataset', JSON.stringify(DashboardItems, null, 2));
+
   return (
     <Fragment>
       <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
@@ -216,14 +237,19 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
         {/* App Bar */}
         <TitleHeader
           onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-          title="Dashboard"
+          title="Dash - board"
           left={WIDTH * 0.36}
           icon="menu-open"
           size={RFPercentage(5)}
         />
 
         {/* Scrollable Content */}
-        <ScrollView
+        <Animated.ScrollView
+          onScroll={Animated.event(
+            [{nativeEvent: {contentOffset: {y: scrollY}}}],
+            {useNativeDriver: true},
+          )}
+          scrollEventThrottle={16}
           refreshControl={
             <RefreshControl onRefresh={GetDashboard} refreshing={refreshing} />
           }
@@ -231,27 +257,28 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
           <FlatList
             data={DashboardItems}
             ListFooterComponent={<View style={styles.footer}></View>}
-            renderItem={({item}) =>
+            renderItem={({item, index}) =>
               item.type === 'Card' ? (
-                <RenderBox item={item} />
+                <RenderBox item={item} index={index} scrollY={scrollY} />
               ) : item.type === 'Table' ? (
                 <DataTableComponent
-                  title={item.name} // Use dynamic title from the item
-                  items={item.value || []} // Ensure it fetches the correct data
+                  title={item.name}
+                  items={item.value || []}
                   page={page}
                   itemsPerPage={itemsPerPage}
                   setPage={setPage}
                   from={from}
+                  to={from + itemsPerPage} // Ensure `to` is correctly defined
                   onItemsPerPageChange={setItemsPerPage}
                 />
               ) : (
                 <RenderBox2 item={item} />
               )
             }
-            keyExtractor={(item, index) => index.toString()} // Ensure unique keys
+            keyExtractor={item => item.id?.toString() || item.id}
             scrollEnabled={false} // Prevent scroll conflicts inside ScrollView
           />
-        </ScrollView>
+        </Animated.ScrollView>
       </SafeAreaView>
       <Toast />
       <Loader visible={refreshing} />
@@ -265,7 +292,7 @@ export default Home;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: WHITE,
+    backgroundColor: GRAY,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   container: {
@@ -273,18 +300,18 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
     // justifyContent: 'center',
-    paddingVertical: 20,
+    paddingVertical: 25,
   },
   box: {
-    width: WIDTH * 0.9,
+    width: WIDTH * 0.95,
     height: HEIGHT * 0.1,
-    backgroundColor: WHITE,
+    backgroundColor: 'rgb(192, 255, 214)',
     borderColor: 'black',
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
-    marginVertical: 10,
+    padding: 10,
+    marginVertical: 3,
     borderRadius: 10,
     alignSelf: 'center',
 
@@ -304,7 +331,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '70%',
+    height: Platform.OS === 'android' ? '70%' : '90%',
     width: '40%',
     borderRadius: 8,
   },
@@ -317,12 +344,12 @@ const styles = StyleSheet.create({
   boxText: {
     fontSize: RFPercentage(2),
     fontFamily: SEMIBOLD,
-    color: GREEN,
+    color: PURPLELIGHT,
   },
   boxText1: {
-    fontSize: RFPercentage(1.25),
+    fontSize: RFPercentage(1.5),
     fontFamily: SEMIBOLD,
-    color: GRAY,
+    color: BLACK,
   },
   boxText2: {
     fontSize: RFPercentage(1.25),

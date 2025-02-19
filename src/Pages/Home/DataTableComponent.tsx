@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useMemo, useEffect} from 'react';
 import {View, Text, ScrollView} from 'react-native';
 import {DataTable} from 'react-native-paper';
 import {BLACK, WHITE} from '../../constants/color';
@@ -25,13 +25,44 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
   to,
   onItemsPerPageChange,
 }) => {
-  const columns = items.length > 0 ? Object.keys(items[0]) : [];
+  console.log('🟢 Items received:', items.length);
+  console.log(
+    `📌 Page: ${page}, Items Per Page: ${itemsPerPage}, From: ${from}, To: ${to}`,
+  );
+
+  // Extract table column names from the first item
+  const columns = useMemo(() => {
+    if (items.length > 0) {
+      console.log('🔵 Columns detected:', Object.keys(items[0]));
+      return Object.keys(items[0]);
+    }
+    return [];
+  }, [items]);
+
+  // Ensure `to` doesn't exceed `items.length`
+  const validTo = Math.min(to, items.length);
+
+  // Get visible items based on pagination
+  const visibleItems = useMemo(() => {
+    const slicedItems = items.slice(from, validTo);
+    console.log('🟠 Visible Items:', slicedItems.length);
+    return slicedItems;
+  }, [items, from, validTo]);
+
+  // Effect to track updates in items and reset pagination if needed
+  useEffect(() => {
+    console.log('🟡 Items updated:', items.length);
+    if (items.length > 0 && from >= items.length) {
+      console.log('⚠️ Adjusting pagination due to new data');
+      setPage(0);
+    }
+  }, [items]);
 
   return (
     <View
       style={{
         width: '99%',
-        padding: 5,
+        padding: 10,
         backgroundColor: WHITE,
         elevation: 6,
         borderRadius: 5,
@@ -39,12 +70,13 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
         shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.2,
         shadowRadius: 4,
-        height: HEIGHT * 0.3,
+        // height: HEIGHT * 0.3,
         margin: 5,
+        marginBottom: 10,
       }}>
       <Text
         style={{
-          alignSelf: 'center',
+          // alignSelf: 'center',
           fontSize: 18,
           fontWeight: 'bold',
           marginBottom: 10,
@@ -53,14 +85,13 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
         {title}
       </Text>
 
-      {/* Check if data is available */}
       {items.length === 0 ? (
         <View
           style={{
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            height: HEIGHT * 0.2,
+            // height: HEIGHT * 0.2,
           }}>
           <Text style={{fontSize: 16, color: '#999'}}>No Data Found</Text>
         </View>
@@ -82,22 +113,27 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
                     borderRightWidth: 1,
                     borderRightColor: '#ddd',
                     padding: 10,
-                    width: 120, // Ensure all columns have a fixed width
-                    textAlign: 'center', // Center align the text in headers
+                    width: 120,
+                    justifyContent: 'center',
                   }}>
-                  {col.replace(/_/g, ' ')} {/* Column name formatting */}
+                  <Text
+                    style={{textAlign: 'center', fontWeight: 'bold'}}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {col.replace(/_/g, ' ')}
+                  </Text>
                 </DataTable.Title>
               ))}
             </DataTable.Header>
 
             {/* Table Rows */}
-            {items.slice(from, to).map((item, rowIndex) => (
+            {visibleItems.map((item, rowIndex) => (
               <DataTable.Row
                 key={rowIndex}
                 style={{
                   borderBottomWidth: 1,
                   borderBottomColor: '#ddd',
-                  backgroundColor: rowIndex % 2 === 0 ? '#fafafa' : 'white', // Alternate row color for readability
+                  backgroundColor: rowIndex % 2 === 0 ? '#fafafa' : 'white',
                 }}>
                 {columns.map((col, colIndex) => (
                   <DataTable.Cell
@@ -107,10 +143,15 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
                       borderRightWidth: 1,
                       borderRightColor: '#ddd',
                       padding: 10,
-                      width: 120, // Ensure all cells have the same fixed width
-                      textAlign: 'center', // Center align the text in cells
+                      width: 120,
+                      justifyContent: 'center',
                     }}>
-                    {String(item[col] ?? '-')}{' '}
+                    <Text
+                      style={{textAlign: 'center', color: BLACK}}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      {String(item[col] ?? '-')}
+                    </Text>
                   </DataTable.Cell>
                 ))}
               </DataTable.Row>
@@ -125,15 +166,13 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
           page={page}
           numberOfPages={Math.ceil(items.length / itemsPerPage)}
           onPageChange={setPage}
-          label={`${from + 1}-${to} of ${items.length}`}
+          label={`${from + 1}-${validTo} of ${items.length}`}
           numberOfItemsPerPage={itemsPerPage}
           onItemsPerPageChange={onItemsPerPageChange}
           showFastPaginationControls
           selectPageDropdownLabel={'Rows per page'}
         />
       )}
-
-      <View style={{height: 50}} />
     </View>
   );
 };

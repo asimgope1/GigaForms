@@ -8,15 +8,47 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {Fragment, useState} from 'react';
+import React, {Fragment, useEffect, useState} from 'react';
 import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {splashStyles} from '../Splash/SplashStyles';
 import {BLACK, DARKGREEN} from '../../constants/color';
 import TitleHeader from './TitleHeader';
 import DropdownComponent from './DropdownComponent';
 import {IconButton} from 'react-native-paper'; // Import IconButton
+import {getObjByKey, storeObjByKey} from '../../utils/Storage';
+import {GETNETWORK} from '../../utils/Network';
 
-const Forms = ({navigation}) => {
+const Forms = ({navigation, route}) => {
+  useEffect(() => {
+    console.log('Route params:', route.params);
+
+    const storeData = async () => {
+      try {
+        if (route.params) {
+          await storeObjByKey('routeForms', route.params);
+          console.log('Route params saved successfully');
+        }
+      } catch (error) {
+        console.error('Error saving route params:', error);
+      }
+    };
+
+    storeData();
+    GetData();
+  }, [route.params]);
+  // if the storeage has data saved store it in variables
+
+  const [forms, setForms] = useState({});
+
+  const GetData = async () => {
+    try {
+      const response = await getObjByKey('routeForms');
+      setForms(response);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
   const data = [
     {label: 'Item 1', value: '1'},
     {label: 'Item 2', value: '2'},
@@ -248,6 +280,8 @@ const Forms = ({navigation}) => {
     );
   };
 
+  console.log('forms', forms);
+
   return (
     <Fragment>
       <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
@@ -257,7 +291,7 @@ const Forms = ({navigation}) => {
 
         {/* Subheader */}
         <View style={styless.subheaderContainer}>
-          <Text style={styless.subheaderText}>Gate Pass Registration</Text>
+          <Text style={styless.subheaderText}>{forms?.formId?.label}</Text>
           <Pressable
             onPress={handleRightButtonClick}
             style={styless.rightButton}>
