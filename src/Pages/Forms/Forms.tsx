@@ -11,7 +11,7 @@ import {
 import React, {Fragment, useEffect, useState} from 'react';
 import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {splashStyles} from '../Splash/SplashStyles';
-import {BLACK, DARKGREEN} from '../../constants/color';
+import {BLACK, DARKGREEN, LIGHTGRAY, WHITE} from '../../constants/color';
 import TitleHeader from './TitleHeader';
 import DropdownComponent from './DropdownComponent';
 import {IconButton} from 'react-native-paper'; // Import IconButton
@@ -353,7 +353,7 @@ const Forms = ({navigation, route}) => {
 
 export default Forms;
 
-const styless = StyleSheet.create({
+export const styless = StyleSheet.create({
   subheaderContainer: {
     backgroundColor: '#f0f0f0',
     paddingVertical: 12,
@@ -455,5 +455,41 @@ const styless = StyleSheet.create({
   rowContainer: {
     flexDirection: 'row',
     marginBottom: 5, // Adjust the spacing between label and value
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: DARKGREEN,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderBottomWidth: 2,
+    borderBottomColor: BLACK,
+  },
+  tableHeaderText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: WHITE,
+    textAlign: 'center',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: LIGHTGRAY,
+  },
+  tableCell: {
+    // flex: 1,
+    width: WIDTH * 0.25,
+    height: HEIGHT * 0.04,
+
+    fontSize: 12,
+    color: BLACK,
+    textAlign: 'center',
+  },
+  checkboxContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 5,
   },
 });

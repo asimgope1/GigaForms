@@ -30,6 +30,7 @@ import {MyStatusBar} from '../constants/config';
 import {splashStyles} from '../Pages/Splash/SplashStyles';
 import {RFPercentage} from 'react-native-responsive-fontsize';
 import {BOLD, REGULAR, SEMIBOLD} from '../constants/fontfamily';
+import Templates from '../Pages/Template/Templates';
 
 // Define Stack and Drawer Navigators
 const Stack = createNativeStackNavigator();
@@ -160,7 +161,9 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
               {approvals.map(option => (
                 <TouchableOpacity
                   style={styles.drawerSubItem}
-                  onPress={() => navigation.navigate('SubApproval1')}>
+                  onPress={() =>
+                    navigation.navigate('Templates', {tamplateId: option})
+                  }>
                   <Icon source="folder-check-outline" size={24} color={GREEN} />
                   <Text style={styles.drawerItemText}>
                     {option?.template_name}
@@ -279,6 +282,11 @@ const MyDrawer: React.FC = () => {
       <Drawer.Screen
         name="Create-User"
         component={CreateUser}
+        options={{headerShown: false}}
+      />
+      <Drawer.Screen
+        name="Templates"
+        component={Templates}
         options={{headerShown: false}}
       />
     </Drawer.Navigator>
