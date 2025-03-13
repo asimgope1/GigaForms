@@ -42,6 +42,7 @@ const Forms = ({navigation, route}) => {
 
   const [forms, setForms] = useState({});
   const [loading, SetLoading] = useState(false);
+  const [Data, SetData] = useState();
 
   const GetData = async () => {
     try {
@@ -80,7 +81,8 @@ const Forms = ({navigation, route}) => {
 
       const result = await response.json();
       SetLoading(false);
-      console.log('Data fetched successfully:', result);
+      console.log('Data fetched successfully:', result.data[0].data);
+      SetData(result.data);
       return result;
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -123,47 +125,6 @@ const Forms = ({navigation, route}) => {
     // Add your custom functionality here
   };
 
-  const DATA = [
-    {
-      Vendor_Code: 'Item 1',
-      Vendor_Name: '1',
-      Name: 'Mr. John Doe',
-      Gender: 'Male',
-      Marital_Status: 'Single',
-      Date_of_Birth: '1990-05-15',
-      Father_Guardian_Name: 'Mr. Richard Doe',
-      Mother_Name: 'Mrs. Jane Doe',
-      Communication_Address: '1234 Elm Street, City, State',
-      Communication_PIN: '123456',
-      Permanent_Address: '5678 Oak Avenue, City, State',
-      Permanent_PIN: '654321',
-      Divisional_Safety_Officer: 'John Smith',
-      Business_Division: 'Engineering',
-      Training_Center_Location: 'Downtown Campus',
-      Course_Name: 'Safety Management',
-      Highest_Qualification: "Master's Degree in Safety Engineering",
-    },
-    {
-      Vendor_Code: 'Item 2',
-      Vendor_Name: '2',
-      Name: 'Ms. Jane Doe',
-      Gender: 'Female',
-      Marital_Status: 'Single',
-      Date_of_Birth: '1990-05-15',
-      Father_Guardian_Name: 'Mr. Richard Doe',
-      Mother_Name: 'Mrs. Jane Doe',
-      Communication_Address: '1234 Elm Street, City, State',
-      Communication_PIN: '123456',
-      Permanent_Address: '5678 Oak Avenue, City, State',
-      Permanent_PIN: '654321',
-      Divisional_Safety_Officer: 'John Smith',
-      Business_Division: 'Engineering',
-      Training_Center_Location: 'Downtown Campus',
-      Course_Name: 'Safety Management',
-      Highest_Qualification: "Master's Degree in Safety Engineering",
-    },
-  ];
-
   // Create a state to manage which item is expanded
   const [expandedItems, setExpandedItems] = useState({});
 
@@ -176,138 +137,61 @@ const Forms = ({navigation, route}) => {
   };
 
   const FormsList = ({item, index, expandedItems, toggleExpand}) => {
+    console.log('Item Data:', item.data);
     const isExpanded = expandedItems[index];
+
+    // Number of fields to show initially
+    const initialVisibleFields = 4;
 
     return (
       <View style={styless.itemContainer}>
-        <View style={styless.rowContainer}>
-          <Text style={[styless.label, styless.boldText]}>Vendor Code:</Text>
-          <Text style={styless.text}>{item.Vendor_Code}</Text>
-        </View>
+        {/* User Name */}
+        <Text
+          style={[
+            styless.dateText,
+            {fontWeight: 'bold', fontSize: 16, color: 'gray'},
+          ]}>
+          User: {item.user?.name || 'N/A'}
+        </Text>
 
-        <View style={styless.rowContainer}>
-          <Text style={[styless.label, styless.boldText]}>Vendor Name:</Text>
-          <Text style={styless.text}>{item.Vendor_Name}</Text>
-        </View>
+        {/* Last Modified */}
+        <Text style={[styless.dateText, {color: 'gray', fontSize: 14}]}>
+          Last Modified: {new Date(item.date_updated).toLocaleString()}
+        </Text>
 
-        <View style={styless.rowContainer}>
-          <Text style={[styless.label, styless.boldText]}>Name:</Text>
-          <Text style={styless.text}>{item.Name}</Text>
-        </View>
+        {/* Iterate over item.data array and show only limited fields initially */}
+        {Array.isArray(item.data) &&
+          item.data
+            .slice(0, isExpanded ? item.data.length : initialVisibleFields)
+            .map((fieldItem, idx) => {
+              const {field_data, value} = fieldItem;
+              return (
+                <View key={idx} style={styless.rowContainer}>
+                  {/* Display Label */}
+                  <Text style={[styless.label, styless.boldText]}>
+                    {field_data?.label}:
+                  </Text>
 
-        <View style={styless.rowContainer}>
-          <Text style={[styless.label, styless.boldText]}>Gender:</Text>
-          <Text style={styless.text}>{item.Gender}</Text>
-        </View>
+                  {/* Display Value */}
+                  <Text style={styless.text}>{value || 'N/A'}</Text>
+                </View>
+              );
+            })}
 
-        {/* Add extra fields here if you want more content to be toggled */}
-        {isExpanded && (
-          <>
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Marital Status:
-              </Text>
-              <Text style={styless.text}>{item.Marital_Status}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Date of Birth:
-              </Text>
-              <Text style={styless.text}>{item.Date_of_Birth}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Father/Guardian Name:
-              </Text>
-              <Text style={styless.text}>{item.Father_Guardian_Name}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Mother's Name:
-              </Text>
-              <Text style={styless.text}>{item.Mother_Name}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Communication Address:
-              </Text>
-              <Text style={styless.text}>{item.Communication_Address}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Communication PIN:
-              </Text>
-              <Text style={styless.text}>{item.Communication_PIN}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Permanent Address:
-              </Text>
-              <Text style={styless.text}>{item.Permanent_Address}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Permanent PIN:
-              </Text>
-              <Text style={styless.text}>{item.Permanent_PIN}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Divisional Safety Officer:
-              </Text>
-              <Text style={styless.text}>{item.Divisional_Safety_Officer}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Business Division:
-              </Text>
-              <Text style={styless.text}>{item.Business_Division}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Training Center Location:
-              </Text>
-              <Text style={styless.text}>{item.Training_Center_Location}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Course Name:
-              </Text>
-              <Text style={styless.text}>{item.Course_Name}</Text>
-            </View>
-
-            <View style={styless.rowContainer}>
-              <Text style={[styless.label, styless.boldText]}>
-                Highest Qualification:
-              </Text>
-              <Text style={styless.text}>{item.Highest_Qualification}</Text>
-            </View>
-          </>
+        {/* Show "View More" only if there are more than initialVisibleFields */}
+        {item.data.length > initialVisibleFields && (
+          <Pressable onPress={() => toggleExpand(index)}>
+            <Text style={styless.viewMoreText}>
+              {isExpanded ? 'View Less' : 'View More'}
+            </Text>
+          </Pressable>
         )}
-
-        {/* Button to toggle View More */}
-        <Pressable onPress={() => toggleExpand(index)}>
-          <Text style={styless.viewMoreText}>
-            {isExpanded ? 'View Less' : 'View More'}
-          </Text>
-        </Pressable>
 
         {/* Buttons */}
         <View style={styless.buttonContainer}>
           <TouchableOpacity
             style={[styless.button, {backgroundColor: 'blue'}]}
-            onPress={() => alert('Edit')}>
+            onPress={() => alert('View Details')}>
             <Text style={styless.buttonText}>View</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -391,22 +275,16 @@ const Forms = ({navigation, route}) => {
         {/* Form List */}
         <View style={styless.listContainer}>
           <FlatList
-            data={DATA}
+            data={Data}
             renderItem={({item, index}) => (
-              <FlatList
-                data={DATA}
-                renderItem={({item, index}) => (
-                  <FormsList
-                    item={item}
-                    index={index}
-                    expandedItems={expandedItems}
-                    toggleExpand={toggleExpand}
-                  />
-                )}
-                keyExtractor={(item, index) => index.toString()}
+              <FormsList
+                item={item}
+                index={index}
+                expandedItems={expandedItems}
+                toggleExpand={toggleExpand}
               />
             )}
-            keyExtractor={item => item.Vendor_Code}
+            keyExtractor={(item, index) => index.toString()}
           />
         </View>
       </SafeAreaView>
@@ -473,7 +351,7 @@ export const styless = StyleSheet.create({
   },
   itemContainer: {
     backgroundColor: '#fff',
-    padding: 14,
+    padding: 10,
     width: WIDTH * 0.95,
     marginBottom: 20,
     borderRadius: 8,
@@ -491,13 +369,14 @@ export const styless = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     marginTop: 16,
   },
   button: {
     padding: 10,
+    margin: 5,
     borderRadius: 4,
-    width: '45%',
+    width: '40%',
     alignItems: 'center',
   },
   buttonText: {
