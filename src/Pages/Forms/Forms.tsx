@@ -17,6 +17,8 @@ import DropdownComponent from './DropdownComponent';
 import {IconButton} from 'react-native-paper'; // Import IconButton
 import {getObjByKey, storeObjByKey} from '../../utils/Storage';
 import {GETNETWORK} from '../../utils/Network';
+import {BASE_URL} from '../../constants/url';
+import {Loader} from '../../components/Loader';
 
 const Forms = ({navigation, route}) => {
   useEffect(() => {
@@ -39,13 +41,51 @@ const Forms = ({navigation, route}) => {
   // if the storeage has data saved store it in variables
 
   const [forms, setForms] = useState({});
+  const [loading, SetLoading] = useState(false);
 
   const GetData = async () => {
     try {
       const response = await getObjByKey('routeForms');
       setForms(response);
+      console.log('hee', response.formId.id);
+      GetListData(response?.formId?.id);
     } catch (error) {
       console.error('Error fetching data:', error);
+    }
+  };
+
+  const GetListData = async (id: number) => {
+    console.log('Fetching data for id:', id);
+    SetLoading(true);
+
+    try {
+      const token =
+        'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQyNDQ5MTY0LCJpYXQiOjE3NDE4NDQzNjQsImp0aSI6ImU3NGRkMWVhODczMzQ4YzViN2YxMjAzMzBjOWE2MmNjIiwidXNlcl9pZCI6MTJ9.poHAqA8wnOEi8xSmn6Qg3LdIgWbQmzwBhd1e7KTec7w';
+
+      const response = await fetch(
+        `https://api.tatapowergatepass.epsumlabs.in/forms/template/${id}/data/`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        SetLoading(false);
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      SetLoading(false);
+      console.log('Data fetched successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      SetLoading(false);
+      return null;
     }
   };
 
@@ -370,6 +410,7 @@ const Forms = ({navigation, route}) => {
           />
         </View>
       </SafeAreaView>
+      <Loader visible={loading} />
     </Fragment>
   );
 };
