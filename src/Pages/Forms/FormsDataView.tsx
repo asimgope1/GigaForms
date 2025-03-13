@@ -15,6 +15,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const FormsDataView = ({navigation, route}) => {
   const {selectedData} = route.params;
+  console.log('selectedData--------------', selectedData);
+  console.log('selectedData.data.label', selectedData.data[0].value);
 
   return (
     <Fragment>
@@ -22,9 +24,13 @@ const FormsDataView = ({navigation, route}) => {
       <SafeAreaView style={[splashStyles.maincontainer]}>
         {/* Back and Page Header */}
         <TitleHeader
-          title="Forms Templates"
+          title="Forms Data View"
           left={WIDTH * 0.3}
-          onPress={() => navigation.navigate('Forms')}
+          onPress={() =>
+            navigation.navigate('Forms', {
+              educationValue: selectedData.data[0].value,
+            })
+          }
         />
 
         <ScrollView style={styles.container}>
@@ -36,7 +42,7 @@ const FormsDataView = ({navigation, route}) => {
             <TouchableOpacity
               style={styles.editButton}
               onPress={() => {
-                navigation.navigate('FormsTemplates');
+                navigation.navigate('Edit');
               }}>
               <Icon name="edit" size={20} color="white" />
             </TouchableOpacity>
@@ -48,9 +54,7 @@ const FormsDataView = ({navigation, route}) => {
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Highest Qualification:</Text>
-              <Text style={styles.value}>
-                {selectedData.Highest_Qualification}
-              </Text>
+              <Text style={styles.value}>{selectedData.data[0].value}</Text>
             </View>
           </View>
         </ScrollView>

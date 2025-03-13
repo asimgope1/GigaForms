@@ -33,6 +33,7 @@ import {BOLD, REGULAR, SEMIBOLD} from '../constants/fontfamily';
 import Templates from '../Pages/Template/Templates';
 import FormsTest from '../Pages/Forms/FormsTest';
 import FormsDataView from '../Pages/Forms/FormsDataView';
+import Edit from '../Pages/Forms/Edit';
 
 // Define Stack and Drawer Navigators
 const Stack = createNativeStackNavigator();
@@ -308,6 +309,11 @@ const MyDrawer: React.FC = () => {
       <Drawer.Screen
         name="FormsDataView"
         component={FormsDataView}
+        options={{headerShown: false}}
+      />
+      <Drawer.Screen
+        name="Edit"
+        component={Edit}
         options={{headerShown: false}}
       />
     </Drawer.Navigator>
