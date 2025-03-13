@@ -57,38 +57,28 @@ const Forms = ({navigation, route}) => {
 
   const GetListData = async (id: number) => {
     console.log('Fetching data for id:', id);
+
     SetLoading(true);
 
+    const url = `https://api.tatapowergatepass.epsumlabs.in/forms/viewdata/2/data/`;
+
     try {
-      const token =
-        'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQyNDQ5MTY0LCJpYXQiOjE3NDE4NDQzNjQsImp0aSI6ImU3NGRkMWVhODczMzQ4YzViN2YxMjAzMzBjOWE2MmNjIiwidXNlcl9pZCI6MTJ9.poHAqA8wnOEi8xSmn6Qg3LdIgWbQmzwBhd1e7KTec7w';
+      const result = await GETNETWORK(url, true);
 
-      const response = await fetch(
-        `https://api.tatapowergatepass.epsumlabs.in/forms/template/${id}/data/`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      if (!response.ok) {
+      if (result) {
         SetLoading(false);
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        console.log('Data fetched successfully:', result.data);
+        SetData(result.data); // Ensure SetData is properly defined in your component
+      } else {
+        SetLoading(false);
+        console.error('Failed to fetch data');
       }
-
-      const result = await response.json();
-      SetLoading(false);
-      console.log('Data fetched successfully:', result.data[0].data);
-      SetData(result.data);
-      return result;
     } catch (error) {
-      console.error('Error fetching data:', error);
       SetLoading(false);
-      return null;
+      console.error('Error fetching data:', error);
     }
+
+    // SetLoading(false);
   };
 
   const data = [
@@ -137,11 +127,18 @@ const Forms = ({navigation, route}) => {
   };
 
   const FormsList = ({item, index, expandedItems, toggleExpand}) => {
-    console.log('Item Data:', item.data);
+    console.log('Item Data:', item);
     const isExpanded = expandedItems[index];
+    const itemDataArray = Object.entries(item)
+      .filter(
+        ([key]) => !['template_id', 'user_id', 'all_form_id'].includes(key),
+      )
+      .map(([key, value]) => (key === 'max' ? ['Stage', value] : [key, value]));
 
     // Number of fields to show initially
     const initialVisibleFields = 4;
+
+    // Convert object to an array of key-value pairs
 
     return (
       <View style={styless.itemContainer}>
@@ -151,35 +148,29 @@ const Forms = ({navigation, route}) => {
             styless.dateText,
             {fontWeight: 'bold', fontSize: 16, color: 'gray'},
           ]}>
-          User: {item.user?.name || 'N/A'}
+          User: {item['UserName'] || 'N/A'}
         </Text>
 
-        {/* Last Modified */}
+        {/* Last Modified (Assuming there's a date field, update accordingly) */}
         <Text style={[styless.dateText, {color: 'gray', fontSize: 14}]}>
-          Last Modified: {new Date(item.date_updated).toLocaleString()}
+          Last Modified:{' '}
+          {item?.date_updated
+            ? new Date(item.date_updated).toLocaleString()
+            : 'N/A'}
         </Text>
 
-        {/* Iterate over item.data array and show only limited fields initially */}
-        {Array.isArray(item.data) &&
-          item.data
-            .slice(0, isExpanded ? item.data.length : initialVisibleFields)
-            .map((fieldItem, idx) => {
-              const {field_data, value} = fieldItem;
-              return (
-                <View key={idx} style={styless.rowContainer}>
-                  {/* Display Label */}
-                  <Text style={[styless.label, styless.boldText]}>
-                    {field_data?.label}:
-                  </Text>
+        {/* Show only limited fields initially */}
+        {itemDataArray
+          .slice(0, isExpanded ? itemDataArray.length : initialVisibleFields)
+          .map(([label, value], idx) => (
+            <View key={idx} style={styless.rowContainer}>
+              <Text style={[styless.label, styless.boldText]}>{label}:</Text>
+              <Text style={styless.text}>{value || 'N/A'}</Text>
+            </View>
+          ))}
 
-                  {/* Display Value */}
-                  <Text style={styless.text}>{value || 'N/A'}</Text>
-                </View>
-              );
-            })}
-
-        {/* Show "View More" only if there are more than initialVisibleFields */}
-        {item.data.length > initialVisibleFields && (
+        {/* View More / View Less */}
+        {itemDataArray.length > initialVisibleFields && (
           <Pressable onPress={() => toggleExpand(index)}>
             <Text style={styless.viewMoreText}>
               {isExpanded ? 'View Less' : 'View More'}
