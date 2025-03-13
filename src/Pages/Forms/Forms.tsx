@@ -146,6 +146,8 @@ const Forms = ({navigation, route}) => {
       )
       .map(([key, value]) => (key === 'max' ? ['Stage', value] : [key, value]));
 
+    //
+
     // Number of fields to show initially
     const initialVisibleFields = 4;
 
