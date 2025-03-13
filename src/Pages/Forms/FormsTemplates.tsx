@@ -9,11 +9,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {Fragment, useState} from 'react';
+import React, {Fragment, useCallback, useState} from 'react';
 import TitleHeader from './TitleHeader';
 import {MyStatusBar, WIDTH} from '../../constants/config';
 import {DARKGREEN} from '../../constants/color';
 import {splashStyles} from '../Splash/SplashStyles';
+import {useFocusEffect} from '@react-navigation/native';
 
 const FormsTemplates = ({navigation}) => {
   const [text, setText] = useState('');
@@ -52,6 +53,15 @@ const FormsTemplates = ({navigation}) => {
       }),
     ]).start();
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      setText(''); // Clear input field
+      setError(''); // Clear error message
+
+      return () => {}; // Cleanup if needed
+    }, []),
+  );
   return (
     <Fragment>
       <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
@@ -88,7 +98,7 @@ const FormsTemplates = ({navigation}) => {
               placeholderTextColor={'grey'}
             />
 
-            <View style={{minHeight: 20}}>
+            <View style={{minHeight: 1}}>
               {error ? (
                 <Animated.View
                   style={{transform: [{translateX: shakeAnimation}]}}>
@@ -151,6 +161,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
     fontSize: 16,
+    color: 'grey',
   },
   inputError: {
     borderColor: 'red',

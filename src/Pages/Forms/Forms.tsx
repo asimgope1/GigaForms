@@ -54,23 +54,34 @@ const Forms = ({navigation, route}) => {
       console.error('Error fetching data:', error);
     }
   };
+  const handleRefresh = async () => {
+    SetLoading(true);
+    try {
+      await GetListData(forms?.formId?.id);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+    SetLoading(false);
+  };
 
   const GetListData = async (id: number) => {
     console.log('Fetching data for id:', id);
+    const i = id + 1;
 
     SetLoading(true);
 
-    const url = `https://api.tatapowergatepass.epsumlabs.in/forms/viewdata/2/data/`;
+    const url = `https://api.tatapowergatepass.epsumlabs.in/forms/viewdata/${id}/data/`;
 
     try {
       const result = await GETNETWORK(url, true);
 
-      if (result) {
+      if (result.data) {
         SetLoading(false);
-        console.log('Data fetched successfully:', result.data);
+        console.log('Data fetched successfully:', result);
         SetData(result.data); // Ensure SetData is properly defined in your component
       } else {
         SetLoading(false);
+        SetData('');
         console.error('Failed to fetch data');
       }
     } catch (error) {
@@ -127,7 +138,7 @@ const Forms = ({navigation, route}) => {
   };
 
   const FormsList = ({item, index, expandedItems, toggleExpand}) => {
-    console.log('Item Data:', item);
+    // console.log('Item Data:', item);
     const isExpanded = expandedItems[index];
     const itemDataArray = Object.entries(item)
       .filter(
@@ -184,6 +195,8 @@ const Forms = ({navigation, route}) => {
             style={[styless.button, {backgroundColor: 'blue'}]}
             onPress={() => {
               navigation.navigate('FormsDataView', {selectedData: item});
+              console.log('Button Pressed');
+              // console.log({selectedData: item});
             }}>
             <Text style={styless.buttonText}>View</Text>
           </TouchableOpacity>
@@ -258,7 +271,9 @@ const Forms = ({navigation, route}) => {
               <IconButton
                 icon="refresh"
                 size={24}
-                onPress={handleDelete}
+                onPress={() => {
+                  handleRefresh();
+                }}
                 style={{margin: 0}}
               />
             </View>
@@ -277,6 +292,11 @@ const Forms = ({navigation, route}) => {
                 toggleExpand={toggleExpand}
               />
             )}
+            ListEmptyComponent={
+              <View style={styless.emptyList}>
+                <Text style={styless.emptyListText}>No Data</Text>
+              </View>
+            }
             keyExtractor={(item, index) => index.toString()}
           />
         </View>
@@ -427,5 +447,16 @@ export const styless = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 5,
+  },
+  emptyList: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    color: '#777', // Lighter shade for values
+  },
+  emptyListText: {
+    fontSize: 14,
+    color: BLACK,
   },
 });
