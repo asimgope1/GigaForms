@@ -19,6 +19,7 @@ import {getObjByKey, storeObjByKey} from '../../utils/Storage';
 import {GETNETWORK} from '../../utils/Network';
 import {BASE_URL} from '../../constants/url';
 import {Loader} from '../../components/Loader';
+import {useFocusEffect} from '@react-navigation/native';
 
 const Forms = ({navigation, route}) => {
   useEffect(() => {
@@ -39,10 +40,28 @@ const Forms = ({navigation, route}) => {
     GetData();
   }, [route.params]);
   // if the storeage has data saved store it in variables
+  useFocusEffect(
+    React.useCallback(() => {
+      // This runs when the screen is focused
+      return () => {
+        // This runs when the screen is unfocused (back navigation)
+        console.log('Clearing states on back navigation...');
+        setForms({});
+        SetData([]);
+        setFilteredData([]);
+        setDropdownData([]);
+        setSearchText('');
+        setValue(null);
+        setExpandedItems({});
+      };
+    }, []),
+  );
 
   const [forms, setForms] = useState({});
   const [loading, SetLoading] = useState(false);
   const [Data, SetData] = useState();
+  const [dropdownData, setDropdownData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]); // State for filtered data
 
   const GetData = async () => {
     try {
@@ -53,15 +72,6 @@ const Forms = ({navigation, route}) => {
     } catch (error) {
       console.error('Error fetching data:', error);
     }
-  };
-  const handleRefresh = async () => {
-    SetLoading(true);
-    try {
-      await GetListData(forms?.formId?.id);
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-    }
-    SetLoading(false);
   };
 
   const GetListData = async (id: number) => {
@@ -79,6 +89,13 @@ const Forms = ({navigation, route}) => {
         SetLoading(false);
         console.log('Data fetched successfully:', result);
         SetData(result.data); // Ensure SetData is properly defined in your component
+        const uniqueLabels = [
+          ...new Set(
+            result.data.flatMap(item => Object.keys(item)), // Extract all keys from each object
+          ),
+        ].map((label, index) => ({label: label, value: index.toString()}));
+
+        setDropdownData(uniqueLabels);
       } else {
         SetLoading(false);
         SetData('');
@@ -92,24 +109,48 @@ const Forms = ({navigation, route}) => {
     // SetLoading(false);
   };
 
-  const data = [
-    {label: 'Item 1', value: '1'},
-    {label: 'Item 2', value: '2'},
-    {label: 'Item 3', value: '3'},
-    {label: 'Item 4', value: '4'},
-    {label: 'Item 5', value: '5'},
-    {label: 'Item 6', value: '6'},
-    {label: 'Item 7', value: '7'},
-    {label: 'Item 8', value: '8'},
-  ];
-
   const [value, setValue] = useState(null);
   const [searchText, setSearchText] = useState('');
 
   // Function to handle search button click
+
   const handleSearch = () => {
+    SetLoading(true); // Start loading
     console.log('Searching for:', searchText);
-    // Add your search logic here
+
+    if (!searchText.trim()) {
+      alert('Please enter a search!');
+      SetLoading(false); // Stop loading
+      return;
+    }
+
+    const filteredResults = Data.filter(item =>
+      Object.values(item).some(value =>
+        value?.toString().toLowerCase().includes(searchText.toLowerCase()),
+      ),
+    );
+
+    if (filteredResults.length === 0) {
+      alert('No Data Found');
+      SetLoading(false); // Stop loading when no data found
+      return;
+    }
+
+    setTimeout(() => {
+      setFilteredData(filteredResults);
+      SetLoading(false); // Stop loading after data is set
+    }, 1000); // Simulated delay of 1 second
+  };
+
+  const handleRefreshDelete = () => {
+    //put a settime out
+    SetLoading(true);
+    setTimeout(() => {
+      setSearchText('');
+      setValue(null);
+      setFilteredData([]);
+      SetLoading(false);
+    }, 1000);
   };
 
   // Function to handle delete button click (Resetting the value)
@@ -128,6 +169,7 @@ const Forms = ({navigation, route}) => {
 
   // Create a state to manage which item is expanded
   const [expandedItems, setExpandedItems] = useState({});
+  const [userList, setUserList] = useState([]);
 
   // Function to toggle the expansion state of a particular item
   const toggleExpand = index => {
@@ -233,13 +275,19 @@ const Forms = ({navigation, route}) => {
 
         {/* Dropdown and Search */}
         <View style={styless.container}>
-          <DropdownComponent data={data} value={value} onChange={setValue} />
+          <DropdownComponent
+            data={dropdownData}
+            value={value}
+            onChange={setValue}
+          />
           <TextInput
             style={styless.input}
             placeholderTextColor={BLACK}
             placeholder="Search..."
             value={searchText}
             onChangeText={setSearchText}
+            numberOfLines={1}
+            textAlignVertical="center"
           />
 
           <View style={{flexDirection: 'row'}}>
@@ -271,10 +319,10 @@ const Forms = ({navigation, route}) => {
                 borderRadius: 10,
               }}>
               <IconButton
-                icon="refresh"
+                icon="delete"
                 size={24}
                 onPress={() => {
-                  handleRefresh();
+                  handleRefreshDelete();
                 }}
                 style={{margin: 0}}
               />
@@ -285,7 +333,7 @@ const Forms = ({navigation, route}) => {
         {/* Form List */}
         <View style={styless.listContainer}>
           <FlatList
-            data={Data}
+            data={filteredData.length > 0 ? filteredData : Data} // Show filtered data or full list
             renderItem={({item, index}) => (
               <FormsList
                 item={item}

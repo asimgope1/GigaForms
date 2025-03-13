@@ -9,7 +9,9 @@ const DropdownComponent = ({data, value, onChange}) => {
   return (
     <View style={styles.container}>
       {value || isFocus ? (
-        <Text style={[styles.label, isFocus && {color: 'blue'}]}>Select</Text>
+        <Text style={[styles.label, isFocus && {color: 'blue'}]}>
+          {value ? 'Selected' : 'Select'}
+        </Text>
       ) : null}
       <Dropdown
         style={[styles.dropdown, isFocus && {borderColor: 'blue'}]}
@@ -22,7 +24,7 @@ const DropdownComponent = ({data, value, onChange}) => {
         maxHeight={300}
         labelField="label"
         valueField="value"
-        placeholder={!isFocus ? 'Select item' : '...'}
+        placeholder={!isFocus ? 'Select Field' : '...'}
         searchPlaceholder="Search..."
         value={value}
         onFocus={() => setIsFocus(true)}
@@ -30,6 +32,13 @@ const DropdownComponent = ({data, value, onChange}) => {
         onChange={item => {
           onChange(item.value); // Pass the selected value to the parent
           setIsFocus(false);
+        }}
+        itemTextStyle={{
+          color: 'black',
+        }}
+        selectedTextProps={{
+          ellipsizeMode: 'tail',
+          numberOfLines: 1,
         }}
       />
     </View>
