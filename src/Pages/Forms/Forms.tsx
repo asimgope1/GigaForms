@@ -310,19 +310,42 @@ const Forms = ({navigation, route}) => {
             onChangeText={setSearchText}
           />
 
-          <IconButton
-            icon="magnify"
-            size={24}
-            onPress={handleSearch}
-            style={styless.iconButton}
-          />
-
-          <IconButton
-            icon="refresh" // Refresh icon
-            size={24}
-            onPress={handleDelete}
-            style={styless.iconButton}
-          />
+          <View style={{flexDirection: 'row'}}>
+            <View
+              style={{
+                width: 50,
+                height: 50,
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: '#ccc',
+                borderRadius: 10,
+              }}>
+              <IconButton
+                icon="magnify"
+                size={24}
+                onPress={handleSearch}
+                style={{margin: 0}}
+              />
+            </View>
+            <View
+              style={{
+                width: 50,
+                height: 50,
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: '#ccc',
+                borderRadius: 10,
+              }}>
+              <IconButton
+                icon="refresh"
+                size={24}
+                onPress={handleDelete}
+                style={{margin: 0}}
+              />
+            </View>
+          </View>
         </View>
 
         {/* Form List */}
@@ -387,7 +410,7 @@ export const styless = StyleSheet.create({
     justifyContent: 'space-between',
   },
   input: {
-    height: 45,
+    height: 50,
     borderColor: 'gray',
     borderWidth: 1,
     borderRadius: 8,

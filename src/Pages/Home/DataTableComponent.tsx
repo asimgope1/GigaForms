@@ -25,15 +25,15 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
   to,
   onItemsPerPageChange,
 }) => {
-  console.log('🟢 Items received:', items.length);
-  console.log(
-    `📌 Page: ${page}, Items Per Page: ${itemsPerPage}, From: ${from}, To: ${to}`,
-  );
+  // console.log('🟢 Items received:', items.length);
+  // console.log(
+  //   `📌 Page: ${page}, Items Per Page: ${itemsPerPage}, From: ${from}, To: ${to}`,
+  // );
 
   // Extract table column names from the first item
   const columns = useMemo(() => {
     if (items.length > 0) {
-      console.log('🔵 Columns detected:', Object.keys(items[0]));
+      // console.log('🔵 Columns detected:', Object.keys(items[0]));
       return Object.keys(items[0]);
     }
     return [];
@@ -45,13 +45,13 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
   // Get visible items based on pagination
   const visibleItems = useMemo(() => {
     const slicedItems = items.slice(from, validTo);
-    console.log('🟠 Visible Items:', slicedItems.length);
+    // console.log('🟠 Visible Items:', slicedItems.length);
     return slicedItems;
   }, [items, from, validTo]);
 
   // Effect to track updates in items and reset pagination if needed
   useEffect(() => {
-    console.log('🟡 Items updated:', items.length);
+    // console.log('🟡 Items updated:', items.length);
     if (items.length > 0 && from >= items.length) {
       console.log('⚠️ Adjusting pagination due to new data');
       setPage(0);

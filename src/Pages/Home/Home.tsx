@@ -186,18 +186,19 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
         throw new Error('Server timeout (504). Please try again later.');
       }
 
-      console.log(
-        'Dashboard details length:',
-        response?.dashboard_details?.length,
-      );
+      // console.log(
+      //   'Dashboard details length:',
+      //   response?.dashboard_details?.length,
+      // );
 
       // If no dashboard details or empty array, call the forms API
       if (
         !response.dashboard_details ||
         response.dashboard_details.length === 0
       ) {
-        const urll = `${BASE_URL}forms/`;
+        const urll = `${BASE_URL}forms/menulistforuser/`;
         const responsee = await GETNETWORK(urll, true);
+        // console.log('urll:', responsee);
 
         if (!responsee || responsee.status === 504) {
           throw new Error('Server timeout (504). Please try again later.');
@@ -228,7 +229,7 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
   };
 
   const from = page * itemsPerPage;
-  console.log('dataset', JSON.stringify(DashboardItems, null, 2));
+  // console.log('dataset', JSON.stringify(DashboardItems, null, 2));
 
   return (
     <Fragment>

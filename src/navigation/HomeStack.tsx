@@ -31,6 +31,7 @@ import {splashStyles} from '../Pages/Splash/SplashStyles';
 import {RFPercentage} from 'react-native-responsive-fontsize';
 import {BOLD, REGULAR, SEMIBOLD} from '../constants/fontfamily';
 import Templates from '../Pages/Template/Templates';
+import FormsTest from '../Pages/Forms/FormsTest';
 
 // Define Stack and Drawer Navigators
 const Stack = createNativeStackNavigator();
@@ -70,10 +71,10 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
 
   const GetOptions = async () => {
     try {
-      const url = `${BASE_URL}forms/`;
+      const url = `${BASE_URL}forms/menulistforuser/`;
       const response = await GETNETWORK(url, true);
-      console.log('GetOptions', response);
-      setOptions(response.data || []);
+      console.log('GetOptions', response.form_data);
+      setOptions(response.form_data || []);
     } catch (error) {
       console.error('Error fetching options:', error);
     }
@@ -82,6 +83,7 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
     try {
       const url = `${BASE_URL}forms/menulistforuser/`;
       const response = await GETNETWORK(url, true);
+      console.log('menulist for user', response);
       console.log('GetAprovalOptions', response.template_data);
       setApprovals(response.template_data || []);
     } catch (error) {
@@ -90,6 +92,7 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
   };
 
   console.log('approvalsss', approvals);
+  console.log('optionssss', options);
 
   return (
     <>
@@ -180,6 +183,12 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
             <Icon source="account-outline" size={24} color={GREEN} />
             <Text style={styles.drawerItemText}>Profile</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.drawerItem}
+            onPress={() => navigation.navigate('FormsTest')}>
+            <Icon source="account-outline" size={24} color={GREEN} />
+            <Text style={styles.drawerItemText}>FormsTest</Text>
+          </TouchableOpacity>
 
           {/* Create User Option (For Superusers) */}
           {userDetails?.is_superuser && (
@@ -205,7 +214,7 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
 
           <View
             style={{
-              position: 'absolute',
+              // position: 'absolute',
               bottom: 0,
               left: 0,
               right: 0,
@@ -287,6 +296,11 @@ const MyDrawer: React.FC = () => {
       <Drawer.Screen
         name="Templates"
         component={Templates}
+        options={{headerShown: false}}
+      />
+      <Drawer.Screen
+        name="FormsTest"
+        component={FormsTest}
         options={{headerShown: false}}
       />
     </Drawer.Navigator>
