@@ -307,7 +307,9 @@ const Forms = ({navigation, route}) => {
         <View style={styless.buttonContainer}>
           <TouchableOpacity
             style={[styless.button, {backgroundColor: 'blue'}]}
-            onPress={() => alert('Edit')}>
+            onPress={() => {
+              navigation.navigate('FormsDataView', {selectedData: item});
+            }}>
             <Text style={styless.buttonText}>View</Text>
           </TouchableOpacity>
           <TouchableOpacity

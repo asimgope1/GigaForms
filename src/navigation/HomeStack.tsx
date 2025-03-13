@@ -32,6 +32,7 @@ import {RFPercentage} from 'react-native-responsive-fontsize';
 import {BOLD, REGULAR, SEMIBOLD} from '../constants/fontfamily';
 import Templates from '../Pages/Template/Templates';
 import FormsTest from '../Pages/Forms/FormsTest';
+import FormsDataView from '../Pages/Forms/FormsDataView';
 
 // Define Stack and Drawer Navigators
 const Stack = createNativeStackNavigator();
@@ -288,6 +289,7 @@ const MyDrawer: React.FC = () => {
         component={FormsTemplates}
         options={{headerShown: false}}
       />
+
       <Drawer.Screen
         name="Create-User"
         component={CreateUser}
@@ -301,6 +303,11 @@ const MyDrawer: React.FC = () => {
       <Drawer.Screen
         name="FormsTest"
         component={FormsTest}
+        options={{headerShown: false}}
+      />
+      <Drawer.Screen
+        name="FormsDataView"
+        component={FormsDataView}
         options={{headerShown: false}}
       />
     </Drawer.Navigator>
