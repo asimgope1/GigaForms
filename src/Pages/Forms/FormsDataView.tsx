@@ -6,16 +6,79 @@ import {
   View,
   TouchableOpacity,
   Pressable,
+  BackHandler,
+  Alert,
 } from 'react-native';
-import React, {Fragment, useState} from 'react';
+import React, {Fragment, useCallback, useEffect, useState} from 'react';
 import {MyStatusBar, WIDTH} from '../../constants/config';
 import TitleHeader from './TitleHeader';
 import {DARKGREEN} from '../../constants/color';
 import {splashStyles} from '../Splash/SplashStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useFocusEffect} from '@react-navigation/native';
 
 const FormsDataView = ({navigation, route}) => {
-  const {selectedData} = route.params;
+  const [selectedData, SetselectedData] = useState({});
+
+  const storeAndSetData = async newData => {
+    try {
+      if (newData) {
+        await AsyncStorage.setItem('selectedData', JSON.stringify(newData));
+      }
+
+      // Retrieve stored data from AsyncStorage
+      const storedData = await AsyncStorage.getItem('selectedData');
+
+      if (storedData) {
+        SetselectedData(JSON.parse(storedData)); // Set state after retrieval
+      }
+    } catch (error) {
+      console.error('Error storing/retrieving data:', error);
+    }
+  };
+
+  // On component mount, check AsyncStorage first
+  useEffect(() => {
+    const checkExistingData = async () => {
+      const existingData = await AsyncStorage.getItem('selectedData');
+      if (existingData) {
+        setSelectedData(JSON.parse(existingData)); // Set existing data immediately
+      }
+
+      // If new data is coming from route, update storage
+      if (route.params?.selectedData) {
+        storeAndSetData(route.params.selectedData);
+      }
+    };
+
+    checkExistingData();
+  }, [route.params?.selectedData]);
+
+  // Refresh data when navigating back
+  const handleBackPress = useCallback(async () => {
+    try {
+      await AsyncStorage.setItem('selectedData', JSON.stringify(selectedData));
+    } catch (error) {
+      console.error('Error saving data before exit:', error);
+    }
+    navigation.navigate('Forms');
+    return true; // Prevent default back action
+  }, [selectedData, navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      storeAndSetData(route.params?.selectedData);
+
+      // Add BackHandler event listener
+      BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+
+      // Remove event listener when component unmounts
+      return () =>
+        BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    }, [route.params?.selectedData, handleBackPress]),
+  );
+
   console.log('selectedData--------------', selectedData);
 
   // Convert object to key-value array, excluding unwanted fields
@@ -46,7 +109,10 @@ const FormsDataView = ({navigation, route}) => {
         <TitleHeader
           title="Form Details"
           left={WIDTH * 0.3}
-          onPress={() => navigation.navigate('Forms')}
+          onPress={
+            () => navigation.navigate('Forms')
+            // navigation.goBack()
+          }
         />
 
         <ScrollView style={styles.container}>
@@ -58,7 +124,7 @@ const FormsDataView = ({navigation, route}) => {
             <TouchableOpacity
               style={styles.editButton}
               onPress={() =>
-                navigation.navigate('Edit', {highestQualification})
+                navigation.navigate('Edit', {itemDataArray: itemDataArray})
               }>
               <Icon name="edit" size={20} color="white" />
             </TouchableOpacity>

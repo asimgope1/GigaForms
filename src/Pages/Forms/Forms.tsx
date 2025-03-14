@@ -38,7 +38,7 @@ const Forms = ({navigation, route}) => {
 
     storeData();
     GetData();
-  }, [route.params]);
+  }, [route.params, navigation]);
   // if the storeage has data saved store it in variables
   useFocusEffect(
     React.useCallback(() => {
@@ -46,6 +46,7 @@ const Forms = ({navigation, route}) => {
       return () => {
         // This runs when the screen is unfocused (back navigation)
         console.log('Clearing states on back navigation...');
+        GetData();
         setForms({});
         SetData([]);
         setFilteredData([]);
@@ -54,7 +55,7 @@ const Forms = ({navigation, route}) => {
         setValue(null);
         setExpandedItems({});
       };
-    }, []),
+    }, [navigation]),
   );
 
   const [forms, setForms] = useState({});
