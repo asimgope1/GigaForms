@@ -92,7 +92,7 @@ const Forms = ({navigation, route}) => {
 
     SetLoading(true);
 
-    const url = `https://api.tatapowergatepass.epsumlabs.in/forms/viewdata/${id}/data/`;
+    const url = `${BASE_URL}forms/viewdata/${id}/data/`;
 
     try {
       const result = await GETNETWORK(url, true);
@@ -174,7 +174,7 @@ const Forms = ({navigation, route}) => {
   // Function for the right button click
   const handleRightButtonClick = () => {
     console.log('Right button clicked!');
-    navigation.navigate('Forms Templates');
+    navigation.navigate('Forms Templates', {data: Data});
 
     // Add your custom functionality here
   };

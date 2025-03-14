@@ -18,6 +18,14 @@ const DropdownComponent = ({data, value, onChange}) => {
         placeholderStyle={styles.placeholderStyle}
         selectedTextStyle={styles.selectedTextStyle}
         inputSearchStyle={styles.inputSearchStyle}
+        itemTextStyle={{
+          color: 'black',
+        }}
+        itemContainerStyle={
+          {
+            // backgroundColor: 'red',
+          }
+        }
         iconStyle={styles.iconStyle}
         data={data}
         search
