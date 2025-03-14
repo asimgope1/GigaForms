@@ -62,6 +62,18 @@ const Forms = ({navigation, route}) => {
   const [Data, SetData] = useState();
   const [dropdownData, setDropdownData] = useState([]);
   const [filteredData, setFilteredData] = useState([]); // State for filtered data
+  const [onRefresh, setOnRefresh] = useState(false);
+
+  const ScrollRefresh = async () => {
+    setOnRefresh(true);
+    try {
+      console.log('refreshed');
+      await GetData();
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+    setOnRefresh(false);
+  };
 
   const GetData = async () => {
     try {
@@ -348,6 +360,10 @@ const Forms = ({navigation, route}) => {
               </View>
             }
             keyExtractor={(item, index) => index.toString()}
+            refreshing={onRefresh}
+            onRefresh={() => {
+              ScrollRefresh();
+            }}
           />
         </View>
       </SafeAreaView>
