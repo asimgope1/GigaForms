@@ -40,6 +40,7 @@ const Templates = ({navigation, route}) => {
 
         const storedData = await getObjByKey('routeTemplates');
         if (storedData) {
+          console.log('storedData,storedData', storedData);
           setTemplates(storedData);
           if (storedData?.tamplateId?.id) {
             GetTemplateData(storedData?.tamplateId?.id);
@@ -62,6 +63,7 @@ const Templates = ({navigation, route}) => {
       const url = `${BASE_URL}forms/custumlink/${id}/data/`;
       const response = await GETNETWORK(url, true);
 
+      console.log('reponse temps', response);
       if (response?.results?.length > 0) {
         setTemplateData(response.results);
         setTableHeaders(Object.keys(response.results[0]));

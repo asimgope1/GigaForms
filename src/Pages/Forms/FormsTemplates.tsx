@@ -30,6 +30,28 @@ const FormsTemplates = ({navigation, route}) => {
   const shakeAnimation = new Animated.Value(0);
   const [openDropdown, setOpenDropdown] = useState({});
   const [dropdownValues, setDropdownValues] = useState({});
+
+  const GetFields = () => {
+    const myHeaders = new Headers();
+    myHeaders.append(
+      'Authorization',
+      'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQyNDY5MTg3LCJpYXQiOjE3NDE4NjQzODcsImp0aSI6IjJhZTdkMDZlNjI3YzRhZjk5ZmRhZmIyY2JhYmFhNDU2IiwidXNlcl9pZCI6MTJ9.pOM2R8fnu6Py2XrWB1FITl3pQPDuirnquKbrFw8uALk',
+    );
+
+    const requestOptions = {
+      method: 'GET',
+      headers: myHeaders,
+      redirect: 'follow',
+    };
+
+    fetch(
+      'https://api.tatapowergatepass.epsumlabs.in/forms/template/2/fields/',
+      requestOptions,
+    )
+      .then(response => response.text())
+      .then(result => console.log(result))
+      .catch(error => console.error(error));
+  };
   useFocusEffect(
     useCallback(() => {
       const {data} = route.params;
@@ -113,7 +135,7 @@ const FormsTemplates = ({navigation, route}) => {
           <TitleHeader
             title="Forms Templates"
             left={WIDTH * 0.3}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('Forms')}
           />
 
           <ScrollView
