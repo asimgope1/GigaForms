@@ -61,6 +61,8 @@ const Forms = ({navigation, route}) => {
   const [forms, setForms] = useState({});
   const [loading, SetLoading] = useState(false);
   const [Data, SetData] = useState();
+  const [ID, SetId] = useState();
+
   const [dropdownData, setDropdownData] = useState([]);
   const [filteredData, setFilteredData] = useState([]); // State for filtered data
   const [onRefresh, setOnRefresh] = useState(false);
@@ -88,6 +90,7 @@ const Forms = ({navigation, route}) => {
   };
 
   const GetListData = async (id: number) => {
+    SetId(id);
     console.log('Fetching data for id:', id);
     const i = id + 1;
 
@@ -175,7 +178,7 @@ const Forms = ({navigation, route}) => {
   // Function for the right button click
   const handleRightButtonClick = () => {
     console.log('Right button clicked!');
-    navigation.navigate('Forms Templates', {data: Data});
+    navigation.navigate('Forms Templates', {data: Data, id: ID});
 
     // Add your custom functionality here
   };
@@ -251,7 +254,10 @@ const Forms = ({navigation, route}) => {
           <TouchableOpacity
             style={[styless.button, {backgroundColor: 'blue'}]}
             onPress={() => {
-              navigation.navigate('FormsDataView', {selectedData: item});
+              navigation.navigate('FormsDataView', {
+                selectedData: item,
+                id: ID,
+              });
               console.log('Button Pressed');
               // console.log({selectedData: item});
             }}>

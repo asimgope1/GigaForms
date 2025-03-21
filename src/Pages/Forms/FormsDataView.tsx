@@ -20,7 +20,22 @@ import {useFocusEffect} from '@react-navigation/native';
 
 const FormsDataView = ({navigation, route}) => {
   const [selectedData, SetselectedData] = useState({});
+  // Extracting params with fallback
+  const {id = null} = route.params || {};
 
+  useEffect(() => {
+    if (id) {
+      console.log('Received ID:', id);
+      // Perform operations if id is available
+    } else {
+      console.warn('No ID received. Check navigation params.');
+    }
+  }, [id]);
+
+  useEffect(() => {
+    console.log('Received ID:', id);
+    // You can now use 'id' for API calls or other operations
+  }, [id]);
   const storeAndSetData = async newData => {
     try {
       if (newData) {
@@ -43,7 +58,7 @@ const FormsDataView = ({navigation, route}) => {
     const checkExistingData = async () => {
       const existingData = await AsyncStorage.getItem('selectedData');
       if (existingData) {
-        setSelectedData(JSON.parse(existingData)); // Set existing data immediately
+        SetselectedData(JSON.parse(existingData)); // Set existing data immediately
       }
 
       // If new data is coming from route, update storage
@@ -78,8 +93,6 @@ const FormsDataView = ({navigation, route}) => {
         BackHandler.addEventListener('hardwareBackPress', handleBackPress);
     }, [route.params?.selectedData, handleBackPress]),
   );
-
-  console.log('selectedData--------------', selectedData);
 
   // Convert object to key-value array, excluding unwanted fields
   const itemDataArray = Object.entries(selectedData)
@@ -124,7 +137,10 @@ const FormsDataView = ({navigation, route}) => {
             <TouchableOpacity
               style={styles.editButton}
               onPress={() =>
-                navigation.navigate('Edit', {itemDataArray: itemDataArray})
+                navigation.navigate('Edit', {
+                  itemDataArray: itemDataArray,
+                  id: id,
+                })
               }>
               <Icon name="edit" size={20} color="white" />
             </TouchableOpacity>

@@ -9,6 +9,8 @@ import {
   View,
   ScrollView,
   BackHandler,
+  Modal,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {MyStatusBar, WIDTH} from '../../constants/config';
@@ -17,17 +19,23 @@ import {DARKGREEN} from '../../constants/color';
 import {splashStyles} from '../Splash/SplashStyles';
 import {useFocusEffect} from '@react-navigation/native';
 import {Animated} from 'react-native';
-import {Modal} from 'react-native-paper';
 import {Calendar} from 'react-native-calendars';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {Loader} from '../../components/Loader';
+import {BASE_URL} from '../../constants/url';
+import {GETNETWORK} from '../../utils/Network';
+import {CheckBox} from 'react-native-elements';
 
 const Edit = ({navigation, route}) => {
-  const {itemDataArray} = route.params || {};
+  const {itemDataArray, id} = route.params || {};
   const [error, setError] = useState({});
   const shakeAnimation = new Animated.Value(0);
   const [openDropdown, setOpenDropdown] = useState({});
   const [dropdownValues, setDropdownValues] = useState({});
+  const [fieldsData, setFieldsData] = useState([]);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [imageData, setImageData] = useState({});
+  const [loading, SetLoading] = useState(false);
 
   // Convert array to an editable object
   const initialData = itemDataArray ? Object.fromEntries(itemDataArray) : {};
@@ -55,6 +63,47 @@ const Edit = ({navigation, route}) => {
 
     loadStoredData();
   }, [itemDataArray]);
+
+  const clearFormState = () => {
+    setFormData({});
+    setError({});
+    setOpenDropdown({});
+    setDropdownValues({});
+    setShowCalendar(false);
+    setImageData({});
+  };
+
+  const GetFields = async id => {
+    const url = `${BASE_URL}forms/template/${id}/fields/`;
+    console.log(url, 'url');
+
+    try {
+      const result = await GETNETWORK(url, true); // Replaced fetch with GETNETWORK
+      if (result) {
+        console.log('Fields data fetched successfully:', result);
+        setFieldsData(result); //Store fields in state
+      } else {
+        console.error('Failed to fetch fields data');
+      }
+    } catch (error) {
+      console.error('Error fetching fields data:', error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      const {id} = route.params;
+      console.log('id: ' + id);
+      GetFields(id);
+      setError({});
+      setOpenDropdown({});
+      setDropdownValues({});
+
+      return () => {
+        clearFormState();
+      };
+    }, [navigation]),
+  );
 
   // Refresh data when screen gains focus
   const handleBackPress = useCallback(() => {
@@ -112,44 +161,71 @@ const Edit = ({navigation, route}) => {
     }, [handleBackPress]),
   );
 
-  // Function to handle text change
   const handleChange = (key, value) => {
-    setFormData(prevState => ({
-      ...prevState,
+    setFormData(prevData => ({
+      ...prevData,
       [key]: value,
     }));
+    setError(prevError => ({
+      ...prevError,
+      [key]: '',
+    }));
+  };
+
+  const handleImageSelect = (key, selectedImage) => {
+    if (selectedImage && selectedImage.uri) {
+      setImageData(prevData => ({
+        ...prevData,
+        [key]: selectedImage,
+      }));
+      handleChange(key, selectedImage.uri);
+    }
+  };
+
+  const openCamera = async key => {
+    const result = await launchCamera({
+      mediaType: 'photo',
+      saveToPhotos: true,
+    });
+    if (result.assets && result.assets.length > 0) {
+      const selectedImage = result.assets[0];
+      handleImageSelect(key, selectedImage);
+      Alert.alert('Image Captured', `File: ${selectedImage.uri}`);
+    } else {
+      console.warn('No image captured!');
+    }
+  };
+
+  const openGallery = async key => {
+    const result = await launchImageLibrary({mediaType: 'photo'});
+    if (result.assets && result.assets.length > 0) {
+      const selectedImage = result.assets[0];
+      handleImageSelect(key, selectedImage);
+      Alert.alert('Image Selected', `File: ${selectedImage.uri}`);
+    } else {
+      console.warn('No image selected!');
+    }
   };
 
   const handleSubmit = async () => {
     const newErrors = {};
-
-    // Validate form fields
-    Object.keys(formData).forEach(key => {
-      if (!formData[key]?.toString().trim()) {
-        newErrors[key] = 'This field is required!';
+    fieldsData.forEach(field => {
+      if (field.mandatory && !formData[field.label]?.toString().trim()) {
+        newErrors[field.label] = `${field.label} is required!`;
       }
     });
 
     if (Object.keys(newErrors).length > 0) {
       setError(newErrors);
-      shake(); // Trigger shake animation for invalid fields
+      shake();
       return;
     }
 
-    try {
-      // Save form data
-      await AsyncStorage.setItem('formData', JSON.stringify(formData));
-
-      // Show success alert
-      Alert.alert('Changes Saved!', 'Your form has been updated successfully.');
-
-      console.log('Updated Data:', formData);
-
-      // Navigate back and pass updated data
-      navigation.navigate('Forms', {updatedData: formData});
-    } catch (error) {
-      console.error('Error saving data:', error);
-    }
+    Alert.alert(
+      'Form Submitted Successfully!',
+      JSON.stringify(formData, null, 2),
+    );
+    clearFormState();
   };
   const shake = () => {
     Animated.sequence([
@@ -179,7 +255,7 @@ const Edit = ({navigation, route}) => {
   return (
     <Fragment>
       <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
-      <SafeAreaView style={[splashStyles.maincontainer]}>
+      <SafeAreaView style={splashStyles.maincontainer}>
         <TitleHeader
           title="Edit Page"
           left={WIDTH * 0.3}
@@ -188,198 +264,200 @@ const Edit = ({navigation, route}) => {
         <ScrollView
           style={styles.container}
           keyboardShouldPersistTaps="handled">
-          {Object.keys(formData).map((key, index) => (
-            <View key={index} style={styles.inputContainer}>
-              {/* Label with Required Indicator */}
-              <Text style={styles.label}>
-                {key.replace(/_/g, ' ')} <Text style={{color: 'red'}}>*</Text>
-              </Text>
+          {(fieldsData.length > 0 ? fieldsData : Object.keys(formData)).map(
+            (field, index) => {
+              // Extract field details dynamically
+              const key = field.label || field;
+              const isMandatory = field.mandatory || false;
+              const value = formData[key] || '';
+              const fieldType = field.type || 'text';
 
-              {/* Conditional Rendering for Different Inputs */}
-              {key === 'Date of Birth' ? (
-                <View style={styles.inputWrapper}>
-                  <TouchableOpacity
-                    onPress={() =>
-                      setOpenDropdown(prev => ({...prev, [key]: true}))
-                    }>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        error[key] ? styles.inputError : null,
-                      ]}
-                      placeholder="Select Date of Birth"
-                      value={formData[key] || ''}
-                      editable={false} // Prevent manual typing
-                      placeholderTextColor={'#aaa'}
+              const isDropdownField = [
+                'Location',
+                'qualification',
+                'Gender',
+                'Marital Status',
+                'Training Center',
+                'Course Name',
+                'Highest Qualification',
+                'Divisional Safety Officer',
+              ].includes(key);
+
+              return (
+                <View key={field.id || index} style={styles.inputContainer}>
+                  {/* Label with Required Indicator */}
+                  <Text style={styles.label}>
+                    {key.replace(/_/g, ' ')}{' '}
+                    {isMandatory && <Text style={{color: 'red'}}>*</Text>}
+                  </Text>
+
+                  {/* Conditional Rendering for Different Input Types */}
+                  {fieldType === 'checkbox' ? (
+                    <CheckBox
+                      title={field.label} // Title for the checkbox
+                      checked={formData[field.label] || false} // Check status
+                      onPress={() =>
+                        handleChange(field.label, !formData[field.label])
+                      }
+                      containerStyle={styles.checkboxContainer}
+                      textStyle={styles.checkboxLabel}
+                      checkedColor="#4CAF50" // Green when checked
+                      uncheckedColor="#aaa" // Gray when unchecked
                     />
-                  </TouchableOpacity>
-
-                  {/* Modal for Date Picker */}
-                  <Modal
-                    transparent={true}
-                    visible={openDropdown[key] || false}
-                    animationType="slide">
-                    <View style={styles.modalContainer}>
-                      <View style={styles.calendarContainer}>
-                        <Calendar
-                          onDayPress={day => {
-                            handleChange(key, day.dateString);
-                            setOpenDropdown(prev => ({
-                              ...prev,
-                              [key]: false,
-                            })); // Close modal
-                          }}
-                          markedDates={{
-                            [formData[key]]: {
-                              selected: true,
-                              selectedColor: 'blue',
-                            },
-                          }}
+                  ) : key === 'Date of Birth' ? (
+                    <View style={styles.inputWrapper}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          setOpenDropdown(prev => ({...prev, [key]: true}))
+                        }>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            error[key] ? styles.inputError : null,
+                          ]}
+                          placeholder="Select Date of Birth"
+                          value={value}
+                          editable={false}
+                          placeholderTextColor={'#aaa'}
                         />
-                        <TouchableOpacity
-                          style={styles.closeButton}
-                          onPress={() =>
-                            setOpenDropdown(prev => ({
-                              ...prev,
-                              [key]: false,
-                            }))
-                          }>
-                          <Text style={styles.closeText}>Close</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </Modal>
-                </View>
-              ) : [
-                  'Location',
-                  'qualification',
-                  'Gender',
-                  'Marital Status',
-                  'Training Center',
-                  'Course Name',
-                  'Highest Qualification',
-                  'Divisional Safety Officer',
-                ].includes(key) ? (
-                <View
-                  style={[
-                    styles.inputWrapper1,
-                    {
-                      zIndex: openDropdown === key ? 2000 - index * 100 : 1,
-                    }, // Dynamic zIndex
-                  ]}>
-                  <DropDownPicker
-                    open={openDropdown[key] || false}
-                    value={formData[key] || null}
-                    items={
-                      key === 'Location'
-                        ? [
-                            {label: 'General', value: 'General'},
-                            {label: 'OBC', value: 'OBC'},
-                            {label: 'SC', value: 'SC'},
-                            {label: 'ST', value: 'ST'},
-                          ]
-                        : key === 'qualification'
-                        ? [
-                            {label: 'High School', value: 'High School'},
-                            {label: 'Intermediate', value: 'Intermediate'},
-                            {label: 'Graduate', value: 'Graduate'},
-                            {
-                              label: 'Post Graduate',
-                              value: 'Post Graduate',
-                            },
-                          ]
-                        : key === 'Gender'
-                        ? [
-                            {label: 'Male', value: 'Male'},
-                            {label: 'Female', value: 'Female'},
-                            {label: 'Other', value: 'Other'},
-                          ]
-                        : key === 'Marital Status'
-                        ? [
-                            {label: 'Single', value: 'Single'},
-                            {label: 'Married', value: 'Married'},
-                            {label: 'Divorced', value: 'Divorced'},
-                            {label: 'Widowed', value: 'Widowed'},
-                          ]
-                        : key === 'Training Center'
-                        ? [
-                            {label: 'Center 1', value: 'Center 1'},
-                            {label: 'Center 2', value: 'Center 2'},
-                            {label: 'Center 3', value: 'Center 3'},
-                            {label: 'Center 4', value: 'Center 4'},
-                          ]
-                        : key === 'Divisional Safety Officer'
-                        ? [
-                            {label: 'Center 1', value: 'Center 1'},
-                            {label: 'Center 2', value: 'Center 2'},
-                            {label: 'Center 3', value: 'Center 3'},
-                            {label: 'Center 4', value: 'Center 4'},
-                          ]
-                        : key === 'Training Center'
-                        ? [
-                            {label: 'Center 1', value: 'Center 1'},
-                            {label: 'Center 2', value: 'Center 2'},
-                            {label: 'Center 3', value: 'Center 3'},
-                            {label: 'Center 4', value: 'Center 4'},
-                          ]
-                        : key === 'Highest Qualification'
-                        ? [
-                            {label: 'Center 1', value: 'Center 1'},
-                            {label: 'Center 2', value: 'Center 2'},
-                            {label: 'Center 3', value: 'Center 3'},
-                            {label: 'Center 4', value: 'Center 4'},
-                          ]
-                        : key === 'Course Name'
-                        ? [
-                            {label: 'Center 1', value: 'Center 1'},
-                            {label: 'Center 2', value: 'Center 2'},
-                            {label: 'Center 3', value: 'Center 3'},
-                            {label: 'Center 4', value: 'Center 4'},
-                          ]
-                        : []
-                    }
-                    setOpen={open =>
-                      setOpenDropdown(prev => ({...prev, [key]: open}))
-                    }
-                    setValue={callback => {
-                      const value = callback(formData[key]);
-                      handleChange(key, value);
-                    }}
-                    setItems={setDropdownValues}
-                    placeholder={`Select ${key.replace(/_/g, ' ')}`}
-                    style={styles.dropdown}
-                    dropDownContainerStyle={[
-                      styles.dropdownContainerBase,
-                      {zIndex: openDropdown === key ? 1000 : 1},
-                    ]}
-                    dropDownDirection="BOTTOM"
-                  />
-                </View>
-              ) : (
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      error[key] ? styles.inputError : null,
-                    ]}
-                    placeholder={`Enter ${key.replace(/_/g, ' ')}`}
-                    value={formData[key] ? formData[key].toString() : ''}
-                    onChangeText={val => handleChange(key, val)}
-                    placeholderTextColor={'#aaa'}
-                  />
-                </View>
-              )}
+                      </TouchableOpacity>
 
-              {/* Error Message with Animated Shake */}
-              {error[key] && (
-                <Animated.View
-                  style={{transform: [{translateX: shakeAnimation}]}}>
-                  <Text style={styles.errorText}>{error[key]}</Text>
-                </Animated.View>
-              )}
-            </View>
-          ))}
+                      {/* Modal for Date Picker */}
+                      <Modal
+                        transparent={true}
+                        visible={openDropdown[key] || false}
+                        animationType="slide">
+                        <View style={styles.modalContainer}>
+                          <View style={styles.calendarContainer}>
+                            <Calendar
+                              onDayPress={day => {
+                                handleChange(key, day.dateString);
+                                setOpenDropdown(prev => ({
+                                  ...prev,
+                                  [key]: false,
+                                }));
+                              }}
+                              markedDates={{
+                                [value]: {
+                                  selected: true,
+                                  selectedColor: 'blue',
+                                },
+                              }}
+                            />
+                            <TouchableOpacity
+                              style={styles.closeButton}
+                              onPress={() =>
+                                setOpenDropdown(prev => ({
+                                  ...prev,
+                                  [key]: false,
+                                }))
+                              }>
+                              <Text style={styles.closeText}>Close</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </Modal>
+                    </View>
+                  ) : isDropdownField ? (
+                    <View
+                      style={[
+                        styles.inputWrapper1,
+                        {
+                          zIndex: openDropdown[key] ? 2000 - index * 100 : 1,
+                        },
+                      ]}>
+                      <DropDownPicker
+                        open={openDropdown[key] || false}
+                        value={value}
+                        items={
+                          key === 'Location'
+                            ? [
+                                {label: 'General', value: 'General'},
+                                {label: 'OBC', value: 'OBC'},
+                                {label: 'SC', value: 'SC'},
+                                {label: 'ST', value: 'ST'},
+                              ]
+                            : key === 'qualification'
+                            ? [
+                                {label: 'High School', value: 'High School'},
+                                {label: 'Intermediate', value: 'Intermediate'},
+                                {label: 'Graduate', value: 'Graduate'},
+                                {
+                                  label: 'Post Graduate',
+                                  value: 'Post Graduate',
+                                },
+                              ]
+                            : key === 'Gender'
+                            ? [
+                                {label: 'Male', value: 'Male'},
+                                {label: 'Female', value: 'Female'},
+                                {label: 'Other', value: 'Other'},
+                              ]
+                            : key === 'Marital Status'
+                            ? [
+                                {label: 'Single', value: 'Single'},
+                                {label: 'Married', value: 'Married'},
+                                {label: 'Divorced', value: 'Divorced'},
+                                {label: 'Widowed', value: 'Widowed'},
+                              ]
+                            : key === 'Training Center' ||
+                              key === 'Divisional Safety Officer' ||
+                              key === 'Course Name' ||
+                              key === 'Highest Qualification'
+                            ? [
+                                {label: 'Center 1', value: 'Center 1'},
+                                {label: 'Center 2', value: 'Center 2'},
+                                {label: 'Center 3', value: 'Center 3'},
+                                {label: 'Center 4', value: 'Center 4'},
+                              ]
+                            : []
+                        }
+                        setOpen={open =>
+                          setOpenDropdown(prev => ({...prev, [key]: open}))
+                        }
+                        setValue={callback => {
+                          const newValue = callback(value);
+                          handleChange(key, newValue);
+                        }}
+                        setItems={setDropdownValues}
+                        placeholder={`Select ${key.replace(/_/g, ' ')}`}
+                        style={styles.dropdown}
+                        dropDownContainerStyle={[
+                          styles.dropdownContainerBase,
+                          {zIndex: openDropdown[key] ? 1000 : 1},
+                        ]}
+                        dropDownDirection="BOTTOM"
+                      />
+                    </View>
+                  ) : (
+                    <View style={styles.inputWrapper}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          error[key] ? styles.inputError : null,
+                        ]}
+                        placeholder={`Enter ${key.replace(/_/g, ' ')}`}
+                        value={value ? value.toString() : ''}
+                        onChangeText={val => handleChange(key, val)}
+                        placeholderTextColor={'#aaa'}
+                      />
+                    </View>
+                  )}
+
+                  {/* Error Message with Animated Shake */}
+                  {error[key] && (
+                    <Animated.View
+                      style={{transform: [{translateX: shakeAnimation}]}}>
+                      <Text style={styles.errorText}>{error[key]}</Text>
+                    </Animated.View>
+                  )}
+                </View>
+              );
+            },
+          )}
         </ScrollView>
+
+        {/* Submit Button */}
         <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
           <Text style={styles.submitText}>Submit</Text>
         </TouchableOpacity>
@@ -494,5 +572,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fff',
     marginTop: 2,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#333',
   },
 });
