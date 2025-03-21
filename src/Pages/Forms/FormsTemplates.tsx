@@ -36,6 +36,7 @@ const FormsTemplates = ({navigation, route}) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [imageData, setImageData] = useState({});
   const [loading, setLoading] = useState(false);
+  const [dropdownApiData, setDropdownApiData] = useState({});
 
   const clearFormState = () => {
     setFormData({});
@@ -128,7 +129,75 @@ const FormsTemplates = ({navigation, route}) => {
     }
   };
 
+  // ✅ Fetch dropdown options based on master_data_code
+  const fetchDropdownOptions = async masterCode => {
+    try {
+      const myHeaders = new Headers();
+      myHeaders.append(
+        'Authorization',
+        'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQyODA2OTEwLCJpYXQiOjE3NDIyMDIxMTAsImp0aSI6ImE5MzIyMTRmNTRkNDRiMWM4MjExNTY1M2U1OWVjZGMzIiwidXNlcl9pZCI6MTJ9.sP922W5FhChSMoYsg9ToQkjnaHc4f3CE22U45zyu-Ro',
+      );
+
+      const requestOptions = {
+        method: 'GET',
+        headers: myHeaders,
+        redirect: 'follow',
+      };
+
+      const url = `https://api.tatapowergatepass.epsumlabs.in/forms/template/${masterCode}/data/`;
+      console.log('Fetching options from:', url);
+
+      const response = await fetch(url, requestOptions);
+      const result = await response.json();
+
+      if (result?.data?.length > 0 && result.data[0]?.data?.length > 0) {
+        const apiItems = result.data[0].data.map(item => ({
+          label: item.value || item.field_data.label || item.toString(),
+          value: item.value || item.toString(),
+        }));
+
+        // ✅ Update dropdown API data for the specific field
+        setDropdownApiData(prevData => ({
+          ...prevData,
+          [masterCode]: apiItems,
+        }));
+      } else {
+        console.warn(
+          `No valid data for masterCode ${masterCode}. Using defaults.`,
+        );
+        setDropdownApiData(prevData => ({
+          ...prevData,
+          [masterCode]: getDefaultOptions(),
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching dropdown options:', error);
+      setDropdownApiData(prevData => ({
+        ...prevData,
+        [masterCode]: getDefaultOptions(),
+      }));
+    }
+  };
+  // ✅ Get default options if API fails or is empty
+  const getDefaultOptions = () => [
+    {label: '1', value: '1'},
+    {label: '2', value: '2'},
+    {label: '3', value: '3'},
+  ];
+
+  // ✅ Fetch API when fields data is loaded
+  useEffect(() => {
+    fieldsData.forEach(field => {
+      if (field.master_data_code) {
+        fetchDropdownOptions(field.master_data_code);
+      }
+    });
+  }, [fieldsData]);
+
   const renderField = (field, index) => {
+    console.log(field.values, 'fieldfieldfieldfield', field.id);
+    // console.log(field.master_data_code, 'master_data_code');
+
     switch (field.type) {
       case 'text':
       case 'textarea':
@@ -151,6 +220,35 @@ const FormsTemplates = ({navigation, route}) => {
         );
 
       case 'dropdown':
+        let dropdownItems = [];
+
+        // Convert comma-separated string to array if necessary
+        if (typeof field.values === 'string' && field.values.trim() !== '') {
+          dropdownItems = field.values.split(',').map(item => ({
+            label: item.trim(),
+            value: item.trim(),
+          }));
+        } else if (
+          (!field.values || field.values.length === 0) &&
+          field.master_data_code &&
+          dropdownApiData[field.master_data_code]
+        ) {
+          dropdownItems = dropdownApiData[field.master_data_code].map(item => ({
+            label: item.label || item.value || item.toString(),
+            value: item.value || item.toString(),
+          }));
+        }
+
+        // If no valid dropdown items, show error or fallback
+        if (dropdownItems.length === 0) {
+          console.log(field.master_data_code, 'master_data_code');
+          return (
+            <Text style={{color: 'red', marginBottom: 10}}>
+              No options available for {field.label}
+            </Text>
+          );
+        }
+
         return (
           <View
             style={{
@@ -160,7 +258,7 @@ const FormsTemplates = ({navigation, route}) => {
             <DropDownPicker
               open={openDropdown[field.id] || false}
               value={formData[field.label] || null}
-              items={field.options || []}
+              items={dropdownItems}
               setOpen={open => {
                 setOpenDropdown(prev => ({...prev, [field.id]: open}));
               }}
