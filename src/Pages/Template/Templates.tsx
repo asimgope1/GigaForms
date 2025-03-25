@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import React, {Fragment, useEffect, useState} from 'react';
 import {IconButton} from 'react-native-paper';
-import {HEIGHT, MyStatusBar} from '../../constants/config';
+import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {
   BLACK,
   DARKGREEN,
@@ -31,6 +31,7 @@ import {CheckBox} from 'react-native-elements';
 import {Loader} from '../../components/Loader';
 import {Calendar} from 'react-native-calendars';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 const Templates = ({navigation, route}) => {
   const [templates, setTemplates] = useState({});
@@ -47,6 +48,10 @@ const Templates = ({navigation, route}) => {
   const [comment, setComment] = useState('');
   const [userDetails, setUserDetails] = useState<any>(null); // State for user details
   const [showCalendar, setShowCalendar] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedRowData, setSelectedRowData] = useState({});
+
+  const [filteredData, setFilteredData] = useState(templateData);
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0],
@@ -140,15 +145,6 @@ const Templates = ({navigation, route}) => {
     }
   };
 
-  const handleSearch = () => {
-    console.log('Searching for:', searchText);
-  };
-
-  const handleReset = () => {
-    setSearchText('');
-    setValue(null);
-  };
-
   const toggleCheckbox = (index, item) => {
     setCheckedItems(prevCheckedItems => {
       const newCheckedItems = {...prevCheckedItems};
@@ -194,6 +190,47 @@ const Templates = ({navigation, route}) => {
       setSelectedTime(formattedTime);
     }
   };
+  const handleViewDetails = item => {
+    setSelectedRowData(item); // Set the selected row data
+    setModalVisible(true); // Open modal
+  };
+
+  const handleSearch = () => {
+    if (!value || !searchText) {
+      alert('Please select a header and enter search text.');
+      return;
+    }
+
+    setLoading(true); // ✅ Show Loader
+
+    setTimeout(() => {
+      // Filter logic: Case-insensitive comparison
+      const filtered = templateData.filter(item =>
+        item[value]
+          ?.toString()
+          .toLowerCase()
+          .includes(searchText.toLowerCase()),
+      );
+
+      if (filtered.length === 0) {
+        alert('No data found for the given search!');
+      }
+
+      setFilteredData(filtered);
+      setLoading(false); // ✅ Hide Loader after search completes
+    }, 1000); // Optional delay for smooth loader effect
+  };
+
+  const handleReset = () => {
+    setLoading(true); // ✅ Show Loader
+
+    setTimeout(() => {
+      setSearchText('');
+      setValue('');
+      setFilteredData(templateData); // ✅ Reset to original data
+      setLoading(false); // ✅ Hide Loader after reset completes
+    }, 1000); // Optional delay for smoother loader effect
+  };
 
   return (
     <Fragment>
@@ -215,74 +252,167 @@ const Templates = ({navigation, route}) => {
 
         {/* Search & Filter Section */}
         <View style={styless.container}>
-          <DropdownComponent data={[]} value={value} onChange={setValue} />
+          {/* Dropdown with Table Headers */}
+          <DropdownComponent
+            data={tableHeaders.map(header => ({
+              label: header,
+              value: header,
+            }))}
+            value={value}
+            onChange={selected => {
+              setValue(selected); // Set the selected header in the dropdown
+            }}
+          />
+
+          {/* TextInput for Search Term */}
           <TextInput
             style={[styless.input, {marginVertical: 10, borderColor: GRAY}]}
-            placeholder="Search..."
+            placeholder="Enter ..."
             placeholderTextColor={BLACK}
             value={searchText}
             onChangeText={setSearchText}
           />
+
+          {/* Search and Reset Buttons */}
           <View style={{flexDirection: 'row', marginBottom: 10}}>
             <IconButton
               icon="magnify"
               size={24}
-              onPress={handleSearch}
+              onPress={handleSearch} // Trigger Search on Press
               style={styless.iconButton}
             />
             <IconButton
               icon="refresh"
               size={24}
-              onPress={handleReset}
+              onPress={handleReset} // Reset the search and filters
               style={styless.iconButton}
             />
           </View>
         </View>
 
         {/* Table Section */}
+        {/* Table Section */}
         <ScrollView horizontal>
-          <View>
+          <View style={{minWidth: tableHeaders.length * WIDTH * 0.25}}>
             {/* Table Header */}
             <View
-              style={[
-                styless.tableHeader,
-                {flexDirection: 'row', backgroundColor: GRAY},
-              ]}>
-              <View style={{width: 50, alignItems: 'center'}}>
-                <Text style={styless.tableHeaderText}>Select</Text>
+              style={{
+                flexDirection: 'row',
+                backgroundColor: '#e0e0e0',
+                borderBottomWidth: 2,
+                borderColor: '#ccc',
+                paddingVertical: 12,
+                paddingHorizontal: 5,
+              }}>
+              {/* Select Column Header */}
+              <View
+                style={{
+                  width: 70,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  borderRightWidth: 1,
+                  borderColor: '#ccc',
+                }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 'bold',
+                    color: '#333',
+                    textAlign: 'center',
+                  }}>
+                  Select
+                </Text>
               </View>
+
+              {/* Dynamic Table Headers */}
               {tableHeaders.map((header, idx) => (
-                <View key={idx} style={{flex: 1, alignItems: 'center'}}>
-                  <Text style={styless.tableHeaderText}>{header}</Text>
+                <View
+                  key={idx}
+                  style={{
+                    width: WIDTH * 0.25,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingVertical: 12,
+                    borderRightWidth: idx === tableHeaders.length - 1 ? 0 : 1,
+                    borderColor: '#ccc',
+                  }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 'bold',
+                      color: '#333',
+                      textAlign: 'center',
+                      flexWrap: 'wrap',
+                    }}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {header}
+                  </Text>
                 </View>
               ))}
             </View>
 
             {/* Table Data */}
             <FlatList
-              data={templateData}
+              data={filteredData} // ✅ Use filtered data
               keyExtractor={(item, index) => index.toString()}
               renderItem={({item, index}) => (
                 <View
-                  style={[
-                    styless.tableRow,
-                    {
+                  style={{
+                    flexDirection: 'row',
+                    backgroundColor:
+                      index % 2 === 0 ? '#fff' : 'rgba(0,0,0,0.05)',
+                    paddingVertical: 5,
+                    borderBottomWidth: 1,
+                    borderColor: '#ccc',
+                  }}>
+                  {/* Checkbox & Eye Icon */}
+                  <View
+                    style={{
+                      width: 70,
+                      justifyContent: 'center',
+                      alignItems: 'center',
                       flexDirection: 'row',
-                      backgroundColor:
-                        index % 2 === 0 ? WHITE : 'rgba(0,0,0,0.05)',
-                    },
-                  ]}>
-                  <View style={{width: 50, alignItems: 'center'}}>
+                      paddingVertical: 5,
+                      borderRightWidth: 1,
+                      borderColor: '#ccc',
+                    }}>
                     <CheckBox
                       checked={!!checkedItems[index]}
                       onPress={() => toggleCheckbox(index, item)}
+                      containerStyle={{
+                        padding: 0,
+                        marginRight: 5,
+                      }}
                     />
+                    <TouchableOpacity onPress={() => handleViewDetails(item)}>
+                      <FontAwesome name="eye" size={22} color={'blue'} />
+                    </TouchableOpacity>
                   </View>
+
+                  {/* Data Cells */}
                   {tableHeaders.map((header, idx) => (
                     <View
                       key={`${index}-${idx}`}
-                      style={{flex: 1, alignItems: 'center'}}>
-                      <Text style={styless.tableCell}>
+                      style={{
+                        width: WIDTH * 0.25,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        paddingVertical: 12,
+                        borderRightWidth:
+                          idx === tableHeaders.length - 1 ? 0 : 1,
+                        borderColor: '#ccc',
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: '#333',
+                          textAlign: 'center',
+                          flexWrap: 'wrap',
+                        }}
+                        numberOfLines={1}
+                        ellipsizeMode="tail">
                         {item?.[header] ?? 'N/A'}
                       </Text>
                     </View>
@@ -319,6 +449,95 @@ const Templates = ({navigation, route}) => {
             </TouchableOpacity>
           ))}
         </View>
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+            }}>
+            <View
+              style={{
+                width: '90%',
+                backgroundColor: '#fff',
+                padding: 20,
+                borderRadius: 10,
+              }}>
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: 'bold',
+                  marginBottom: 15,
+                  textAlign: 'center',
+                }}>
+                Row Details
+              </Text>
+
+              <ScrollView
+                style={{
+                  maxHeight: HEIGHT * 0.5,
+                }}>
+                {Object.keys(selectedRowData).map((key, idx) => (
+                  <View
+                    key={idx}
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      paddingVertical: 5,
+                      borderBottomWidth: 1,
+                      borderColor: '#eee',
+                    }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 'bold',
+                        color: '#333',
+                      }}>
+                      {key.replace(/_/g, ' ')}:
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        color: '#555',
+                        flexShrink: 1,
+                        textAlign: 'right',
+                      }}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      {selectedRowData[key]?.toString() || 'N/A'}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+
+              {/* Close Button */}
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={{
+                  marginTop: 15,
+                  backgroundColor: '#ff4d4d',
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                }}>
+                <Text
+                  style={{
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: 16,
+                  }}>
+                  Close
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
 
       {/* Modal for Selected Item Details */}
