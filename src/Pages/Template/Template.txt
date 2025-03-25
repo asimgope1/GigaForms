@@ -203,17 +203,22 @@ const Templates = ({navigation, route}) => {
 
     setLoading(true); // ✅ Show Loader
 
-    // Filter logic: Case-insensitive comparison
-    const filtered = templateData.filter(item =>
-      item[value]?.toString().toLowerCase().includes(searchText.toLowerCase()),
-    );
+    setTimeout(() => {
+      // Filter logic: Case-insensitive comparison
+      const filtered = templateData.filter(item =>
+        item[value]
+          ?.toString()
+          .toLowerCase()
+          .includes(searchText.toLowerCase()),
+      );
 
-    if (filtered.length === 0) {
-      alert('No data found for the given search!');
-    }
+      if (filtered.length === 0) {
+        alert('No data found for the given search!');
+      }
 
-    setFilteredData(filtered);
-    setLoading(false); // ✅ Hide Loader after search completes
+      setFilteredData(filtered);
+      setLoading(false); // ✅ Hide Loader after search completes
+    }, 1000); // Optional delay for smooth loader effect
   };
 
   const handleReset = () => {
