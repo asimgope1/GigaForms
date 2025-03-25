@@ -98,20 +98,37 @@ const Templates = ({navigation, route}) => {
   };
 
   useEffect(() => {
+    // Fetch profile data on initial render
     getProfileData();
+    console.log('route?.params0', route?.params);
+
+    // Fetch template data immediately on initial render
     const fetchData = async () => {
       try {
-        if (route.params) {
+        console.log('route?.params1', route?.params);
+        // ✅ Store route params if available
+        if (route?.params) {
           await storeObjByKey('routeTemplates', route.params);
         }
 
+        // ✅ Fetch stored template data
         const storedData = await getObjByKey('routeTemplates');
         if (storedData) {
           setTemplates(storedData);
+
+          // ✅ Check if tamplateId exists correctly
           if (storedData?.tamplateId?.id) {
+            console.log(
+              'Fetching template with ID:',
+              storedData?.tamplateId?.id,
+            );
             GetTemplateData(storedData?.tamplateId?.id);
             SetTemplateId(storedData?.tamplateId?.id);
+          } else {
+            console.log('No template ID found in stored data');
           }
+        } else {
+          console.log('No stored data found');
         }
       } catch (error) {
         console.error('Error fetching or storing data:', error);
@@ -121,10 +138,11 @@ const Templates = ({navigation, route}) => {
     };
 
     fetchData();
-  }, [route.params]);
+  }, []); // ✅ Empty dependency array to run only once
 
   const GetTemplateData = async id => {
-    if (!id) return;
+    console.log('id', id);
+    // if (!id) return;
     try {
       const url = `${BASE_URL}forms/custumlink/${id}/data/`;
       const response = await GETNETWORK(url, true);
@@ -268,24 +286,17 @@ const Templates = ({navigation, route}) => {
     };
     console.log('handelUpdateComment requestoptios', requestOptions);
 
-    // Close modal and reset fields
-
-    // Refresh the page by incrementing refreshKey
-
     fetch(`${BASE_URL}workflow/action/?bulk=true`, requestOptions)
       .then(response => response.text())
       .then(result => {
-        //  this.state.ActivityVisible = true;
-
         console.log('handelUpdateComment.  successfully----called', result);
         Alert.alert('Successfully updated', 'Comment added successfully', [
           {text: 'OK'},
         ]);
-        //  this.state.ActivityVisible = false;
+
         closeModal();
       })
       .catch(error => console.error(error));
-    // .finally(() => this.setState({ActivityVisible: false})); // Stop loading after response
   };
 
   const handleActionPress = action => {
@@ -472,7 +483,7 @@ const Templates = ({navigation, route}) => {
 
             {/* Table Data */}
             <FlatList
-              data={filteredData} // ✅ Use filtered data
+              data={filteredData.length > 0 ? filteredData : templateData}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({item, index}) => (
                 <View
