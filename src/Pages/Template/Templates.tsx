@@ -8,6 +8,7 @@ import {
   Button,
   TouchableOpacity,
   Modal,
+  Alert,
 } from 'react-native';
 import React, {Fragment, useEffect, useState} from 'react';
 import {IconButton} from 'react-native-paper';
@@ -52,6 +53,7 @@ const Templates = ({navigation, route}) => {
   const [selectedRowData, setSelectedRowData] = useState({});
 
   const [filteredData, setFilteredData] = useState(templateData);
+  const [TemplateID, SetTemplateId] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0],
@@ -108,6 +110,7 @@ const Templates = ({navigation, route}) => {
           setTemplates(storedData);
           if (storedData?.tamplateId?.id) {
             GetTemplateData(storedData?.tamplateId?.id);
+            SetTemplateId(storedData?.tamplateId?.id);
           }
         }
       } catch (error) {
@@ -169,11 +172,120 @@ const Templates = ({navigation, route}) => {
     console.log('selectedFieldData', selectedFieldData);
     console.log('actions', actions);
 
-    // Extract all_form_id from each field
-    const allFormIds = selectedFieldData?.fields?.map(item => item.all_form_id);
+    // ✅ Map through fields dynamically and extract key-value pairs
+    const mappedData = selectedFieldData?.fields?.flatMap(item =>
+      Object.keys(item).map(key => {
+        return {
+          field: key, // Key as 'field'
+          value: item[key] || '', // Corresponding value
+        };
+      }),
+    );
+
+    console.log('Mapped Data:', mappedData);
+
+    // ✅ Extract all_form_id dynamically
+    const allFormIds = selectedFieldData?.fields
+      ?.map(item => item?.all_form_id)
+      .filter(id => id);
 
     console.log('All Form IDs:', allFormIds);
-    alert('Form submitted successfully! 🎉');
+    console.log('sTemplateID', TemplateID);
+
+    // ✅ Prepare request body
+    let requestBody = {
+      data: [] || mappedData,
+      template: TemplateID,
+      is_delete: false,
+      lock_status: 'N',
+      all_form_id: allFormIds,
+    };
+
+    console.log('updateForm-------called', requestBody);
+
+    // ✅ Prepare request headers
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+    myHeaders.append(
+      'Authorization',
+      `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzNDg2NDg3LCJpYXQiOjE3NDI4ODE2ODcsImp0aSI6IjljOTY1YTcyN2ZmMTQwZWU5YTE1NWI2ZjVjNWZhMTMwIiwidXNlcl9pZCI6MTF9.5LY7QnfaIuod-o0i3DlAH3Quv8y-caX-oHtmDQ8QRgY`,
+    );
+
+    // ✅ Stringify request body
+    const raw = JSON.stringify(requestBody);
+    console.log('updateForm-------called----raw', raw);
+
+    // ✅ Define request options
+    const requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow',
+    };
+
+    console.log('update form requestOptions', requestOptions);
+
+    // ✅ API call to update form
+    fetch(`${BASE_URL}forms/data/bulkupdate`, requestOptions)
+      .then(async response => {
+        const result = await response.json(); // Parse JSON response correctly
+        console.log('updated successfully----called', result);
+        handelUpdateComment(comment, allFormIds, actions[0].id);
+
+        // ✅ Close the modal after successful update
+        closeModal();
+
+        // ✅ Handle further actions if required
+        // this.updateComment(result); // Optional if needed
+      })
+      .catch(err => {
+        console.error('Error updating form:', err);
+      });
+  };
+
+  const handelUpdateComment = (a, b, c) => {
+    console.log('handelUpdateComment-------called', a, b, c);
+
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+    myHeaders.append(
+      'Authorization',
+      `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzNDg2NDg3LCJpYXQiOjE3NDI4ODE2ODcsImp0aSI6IjljOTY1YTcyN2ZmMTQwZWU5YTE1NWI2ZjVjNWZhMTMwIiwidXNlcl9pZCI6MTF9.5LY7QnfaIuod-o0i3DlAH3Quv8y-caX-oHtmDQ8QRgY`,
+    );
+
+    const raw = JSON.stringify({
+      comment: comment,
+      form_data: b,
+      transition: c,
+    });
+    console.log('handelUpdateComment------raw', raw);
+
+    const requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow',
+    };
+    console.log('handelUpdateComment requestoptios', requestOptions);
+
+    // Close modal and reset fields
+
+    // Refresh the page by incrementing refreshKey
+
+    fetch(`${BASE_URL}workflow/action/?bulk=true`, requestOptions)
+      .then(response => response.text())
+      .then(result => {
+        //  this.state.ActivityVisible = true;
+
+        console.log('handelUpdateComment.  successfully----called', result);
+        Alert.alert('Successfully updated', 'Comment added successfully', [
+          {text: 'OK'},
+        ]);
+        //  this.state.ActivityVisible = false;
+        closeModal();
+      })
+      .catch(error => console.error(error));
+    // .finally(() => this.setState({ActivityVisible: false})); // Stop loading after response
   };
 
   const handleActionPress = action => {
