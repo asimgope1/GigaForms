@@ -51,9 +51,10 @@ const Templates = ({navigation, route}) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRowData, setSelectedRowData] = useState({});
+  const [token, SetToken] = useState();
 
   const [filteredData, setFilteredData] = useState(templateData);
-  const [TemplateID, SetTemplateId] = useState(false);
+  const [TemplateID, SetTemplateId] = useState('');
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0],
@@ -102,6 +103,14 @@ const Templates = ({navigation, route}) => {
     getProfileData();
     console.log('route?.params0', route?.params);
 
+    const RetriveData = async () => {
+      const storedData = await getObjByKey('loginResponse');
+      // console.log('object storedData', storedData.access);
+      if (storedData) {
+        SetToken(storedData?.access);
+      }
+    };
+
     // Fetch template data immediately on initial render
     const fetchData = async () => {
       try {
@@ -137,11 +146,14 @@ const Templates = ({navigation, route}) => {
       }
     };
 
+    RetriveData();
+
     fetchData();
   }, []); // ✅ Empty dependency array to run only once
 
   const GetTemplateData = async id => {
     console.log('id', id);
+    resetSelectedItems();
     // if (!id) return;
     try {
       const url = `${BASE_URL}forms/custumlink/${id}/data/`;
@@ -183,6 +195,7 @@ const Templates = ({navigation, route}) => {
   const closeModal = () => {
     setIsModalVisible(false);
     setSelectedFieldData(null);
+    resetSelectedItems();
     setComment('');
   };
 
@@ -224,10 +237,7 @@ const Templates = ({navigation, route}) => {
     // ✅ Prepare request headers
     const myHeaders = new Headers();
     myHeaders.append('Content-Type', 'application/json');
-    myHeaders.append(
-      'Authorization',
-      `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzNDg2NDg3LCJpYXQiOjE3NDI4ODE2ODcsImp0aSI6IjljOTY1YTcyN2ZmMTQwZWU5YTE1NWI2ZjVjNWZhMTMwIiwidXNlcl9pZCI6MTF9.5LY7QnfaIuod-o0i3DlAH3Quv8y-caX-oHtmDQ8QRgY`,
-    );
+    myHeaders.append('Authorization', `Bearer ${token}`);
 
     // ✅ Stringify request body
     const raw = JSON.stringify(requestBody);
@@ -266,10 +276,7 @@ const Templates = ({navigation, route}) => {
 
     const myHeaders = new Headers();
     myHeaders.append('Content-Type', 'application/json');
-    myHeaders.append(
-      'Authorization',
-      `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzNDg2NDg3LCJpYXQiOjE3NDI4ODE2ODcsImp0aSI6IjljOTY1YTcyN2ZmMTQwZWU5YTE1NWI2ZjVjNWZhMTMwIiwidXNlcl9pZCI6MTF9.5LY7QnfaIuod-o0i3DlAH3Quv8y-caX-oHtmDQ8QRgY`,
-    );
+    myHeaders.append('Authorization', `Bearer ${token}`);
 
     const raw = JSON.stringify({
       comment: comment,
@@ -293,6 +300,8 @@ const Templates = ({navigation, route}) => {
         Alert.alert('Successfully updated', 'Comment added successfully', [
           {text: 'OK'},
         ]);
+        GetTemplateData(TemplateID);
+        resetSelectedItems();
 
         closeModal();
       })
@@ -358,6 +367,11 @@ const Templates = ({navigation, route}) => {
       setFilteredData(templateData); // ✅ Reset to original data
       setLoading(false); // ✅ Hide Loader after reset completes
     }, 1000); // Optional delay for smoother loader effect
+  };
+
+  const resetSelectedItems = () => {
+    setCheckedItems({}); // ✅ Clear selected checkboxes
+    setIsAnyChecked(false); // ✅ Reset 'isAnyChecked'
   };
 
   return (
