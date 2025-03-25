@@ -13,7 +13,7 @@ import {
 import {Avatar} from 'react-native-paper';
 import {HEIGHT, MyStatusBar} from '../../constants/config';
 import {Icon} from 'react-native-paper';
-import {BLACK, DARKGREEN, GRAY, WHITE} from '../../constants/color';
+import {BLACK, BRAND, DARKGREEN, GRAY, WHITE} from '../../constants/color';
 import {BASE_URL} from '../../constants/url';
 import {GETNETWORK} from '../../utils/Network';
 import {Loader} from '../../components/Loader';
@@ -81,7 +81,7 @@ const Profile = ({navigation}: any) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
+      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
       <SafeAreaView style={styles.mainContainer}>
         {/* App Bar with Back Button */}
         <TitleHeader

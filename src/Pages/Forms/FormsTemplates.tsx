@@ -14,7 +14,7 @@ import {
 import React, {Fragment, useCallback, useEffect, useState} from 'react';
 import TitleHeader from './TitleHeader';
 import {MyStatusBar, WIDTH} from '../../constants/config';
-import {DARKGREEN} from '../../constants/color';
+import {BRAND, DARKGREEN} from '../../constants/color';
 import {splashStyles} from '../Splash/SplashStyles';
 import {useFocusEffect} from '@react-navigation/native';
 import {Loader} from '../../components/Loader';
@@ -131,6 +131,7 @@ const FormsTemplates = ({navigation, route}) => {
 
   // ✅ Fetch dropdown options based on master_data_code
   const fetchDropdownOptions = async masterCode => {
+    setLoading(true);
     try {
       const myHeaders = new Headers();
       myHeaders.append(
@@ -176,6 +177,11 @@ const FormsTemplates = ({navigation, route}) => {
         ...prevData,
         [masterCode]: getDefaultOptions(),
       }));
+    } finally {
+      // ✅ Keep loader for at least 10 seconds
+      setTimeout(() => {
+        setLoading(false); // ✅ Stop loader after 10 sec
+      }, 2000);
     }
   };
   // ✅ Get default options if API fails or is empty
@@ -221,6 +227,18 @@ const FormsTemplates = ({navigation, route}) => {
 
       case 'dropdown':
         let dropdownItems = [];
+        if (loading) {
+          return (
+            <View
+              style={{
+                marginBottom: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Loader visible={true} />
+            </View>
+          );
+        }
 
         // Convert comma-separated string to array if necessary
         if (typeof field.values === 'string' && field.values.trim() !== '') {
@@ -403,7 +421,7 @@ const FormsTemplates = ({navigation, route}) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
+      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{flex: 1}}>

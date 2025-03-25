@@ -5,7 +5,7 @@ import {pick} from '@react-native-documents/picker';
 import SignatureCapture from 'react-native-signature-canvas';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {MyStatusBar} from '../../constants/config';
-import {DARKGREEN} from '../../constants/color';
+import {BRAND, DARKGREEN} from '../../constants/color';
 
 const FormsTest = () => {
   const signatureRef = useRef(null);
@@ -63,7 +63,7 @@ const FormsTest = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
+      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* File Upload */}
         <Card style={styles.card}>

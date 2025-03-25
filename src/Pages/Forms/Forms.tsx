@@ -11,7 +11,7 @@ import {
 import React, {Fragment, useEffect, useState} from 'react';
 import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {splashStyles} from '../Splash/SplashStyles';
-import {BLACK, DARKGREEN, LIGHTGRAY, WHITE} from '../../constants/color';
+import {BLACK, BRAND, DARKGREEN, LIGHTGRAY, WHITE} from '../../constants/color';
 import TitleHeader from './TitleHeader';
 import DropdownComponent from './DropdownComponent';
 import {IconButton} from 'react-native-paper'; // Import IconButton
@@ -277,7 +277,7 @@ const Forms = ({navigation, route}) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
+      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
       <SafeAreaView style={[splashStyles.maincontainer]}>
         {/* back and page header */}
         <TitleHeader title="Forms" onPress={() => navigation.goBack()} />

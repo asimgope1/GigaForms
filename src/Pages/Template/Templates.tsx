@@ -10,7 +10,7 @@ import {
 import React, {Fragment, useEffect, useState} from 'react';
 import {IconButton} from 'react-native-paper';
 import {MyStatusBar} from '../../constants/config';
-import {BLACK, DARKGREEN} from '../../constants/color';
+import {BLACK, BRAND, DARKGREEN} from '../../constants/color';
 import TitleHeader from '../Forms/TitleHeader';
 import {GETNETWORK} from '../../utils/Network';
 import {BASE_URL} from '../../constants/url';
@@ -116,7 +116,7 @@ const Templates = ({navigation, route}) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
+      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
       <SafeAreaView style={splashStyles.maincontainer}>
         <TitleHeader
           title="Template Data View"

@@ -13,7 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch} from 'react-redux';
 import {BASE_URL} from '../../constants/url';
 import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
-import {BLACK, DARKGREEN, GRAY} from '../../constants/color';
+import {BLACK, BRAND, DARKGREEN, GRAY} from '../../constants/color';
 import TitleHeader from '../Forms/TitleHeader';
 import {Dropdown} from 'react-native-element-dropdown';
 
@@ -264,7 +264,7 @@ const CreateUser = ({navigation}: CreateUserProps) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
+      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
       <SafeAreaView style={styles.mainContainer}>
         <TitleHeader
           title="Create-User"

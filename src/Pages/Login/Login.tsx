@@ -13,7 +13,7 @@ import {
 import {TextInput, Button, Text} from 'react-native-paper';
 import Toast from 'react-native-toast-message';
 import {LOGOZZ} from '../../constants/imagepath';
-import {GREEN, WHITE, BLACK, DARKGREEN} from '../../constants/color';
+import {GREEN, WHITE, BLACK, DARKGREEN, BRAND} from '../../constants/color';
 import {MyStatusBar, WIDTH} from '../../constants/config';
 import {POSTNETWORK} from '../../utils/Network';
 import {storeObjByKey} from '../../utils/Storage';
@@ -103,7 +103,7 @@ const Login = () => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={DARKGREEN} barStyle="dark-content" />
+      <MyStatusBar backgroundColor={BRAND} barStyle="dark-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flexContainer}>

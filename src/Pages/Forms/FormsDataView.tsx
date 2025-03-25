@@ -12,7 +12,7 @@ import {
 import React, {Fragment, useCallback, useEffect, useState} from 'react';
 import {MyStatusBar, WIDTH} from '../../constants/config';
 import TitleHeader from './TitleHeader';
-import {DARKGREEN} from '../../constants/color';
+import {BRAND, DARKGREEN} from '../../constants/color';
 import {splashStyles} from '../Splash/SplashStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -116,7 +116,7 @@ const FormsDataView = ({navigation, route}) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
+      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
       <SafeAreaView style={[splashStyles.maincontainer]}>
         {/* Back and Page Header */}
         <TitleHeader
