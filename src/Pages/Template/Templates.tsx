@@ -8,6 +8,7 @@ import {
   Button,
   TouchableOpacity,
   Modal,
+  Alert,
 } from 'react-native';
 import React, {Fragment, useEffect, useState} from 'react';
 import {IconButton} from 'react-native-paper';
@@ -96,19 +97,36 @@ const Templates = ({navigation, route}) => {
   };
 
   useEffect(() => {
+    // Fetch profile data on initial render
     getProfileData();
+    console.log('route?.params0', route?.params);
+
+    // Fetch template data immediately on initial render
     const fetchData = async () => {
       try {
-        if (route.params) {
+        console.log('route?.params1', route?.params);
+        // ✅ Store route params if available
+        if (route?.params) {
           await storeObjByKey('routeTemplates', route.params);
         }
 
+        // ✅ Fetch stored template data
         const storedData = await getObjByKey('routeTemplates');
         if (storedData) {
           setTemplates(storedData);
+
+          // ✅ Check if tamplateId exists correctly
           if (storedData?.tamplateId?.id) {
+            console.log(
+              'Fetching template with ID:',
+              storedData?.tamplateId?.id,
+            );
             GetTemplateData(storedData?.tamplateId?.id);
+          } else {
+            console.log('No template ID found in stored data');
           }
+        } else {
+          console.log('No stored data found');
         }
       } catch (error) {
         console.error('Error fetching or storing data:', error);
@@ -118,10 +136,11 @@ const Templates = ({navigation, route}) => {
     };
 
     fetchData();
-  }, [route.params]);
+  }, []); // ✅ Empty dependency array to run only once
 
   const GetTemplateData = async id => {
-    if (!id) return;
+    console.log('id', id);
+    // if (!id) return;
     try {
       const url = `${BASE_URL}forms/custumlink/${id}/data/`;
       const response = await GETNETWORK(url, true);
@@ -166,9 +185,116 @@ const Templates = ({navigation, route}) => {
   };
 
   const updateForm = () => {
-    console.log('Form Submitted with Comment:', comment);
-    closeModal();
-    alert('Form submitted successfully! 🎉');
+    console.log('selectedFieldData', selectedFieldData);
+    console.log('actions', actions);
+
+    // ✅ Map through fields dynamically and extract key-value pairs
+    const mappedData = selectedFieldData?.fields?.flatMap(item =>
+      Object.keys(item).map(key => {
+        return {
+          field: key, // Key as 'field'
+          value: item[key] || '', // Corresponding value
+        };
+      }),
+    );
+
+    console.log('Mapped Data:', mappedData);
+
+    // ✅ Extract all_form_id dynamically
+    const allFormIds = selectedFieldData?.fields
+      ?.map(item => item?.all_form_id)
+      .filter(id => id);
+
+    console.log('All Form IDs:', allFormIds);
+    console.log('sTemplateID', TemplateID);
+
+    // ✅ Prepare request body
+    let requestBody = {
+      data: {},
+      template: TemplateID,
+      is_delete: false,
+      lock_status: 'N',
+      all_form_id: allFormIds,
+    };
+
+    console.log('updateForm-------called', requestBody);
+
+    // ✅ Prepare request headers
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+    myHeaders.append(
+      'Authorization',
+      `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzNDg2NDg3LCJpYXQiOjE3NDI4ODE2ODcsImp0aSI6IjljOTY1YTcyN2ZmMTQwZWU5YTE1NWI2ZjVjNWZhMTMwIiwidXNlcl9pZCI6MTF9.5LY7QnfaIuod-o0i3DlAH3Quv8y-caX-oHtmDQ8QRgY`,
+    );
+
+    // ✅ Stringify request body
+    const raw = JSON.stringify(requestBody);
+    console.log('updateForm-------called----raw', raw);
+
+    // ✅ Define request options
+    const requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow',
+    };
+
+    console.log('update form requestOptions', requestOptions);
+
+    // ✅ API call to update form
+    fetch(`${BASE_URL}forms/data/bulkupdate`, requestOptions)
+      .then(async response => {
+        const result = await response.json(); // Parse JSON response correctly
+        console.log('updated successfully----called', result);
+        handelUpdateComment(comment, allFormIds, actions[0].id);
+
+        // ✅ Close the modal after successful update
+        closeModal();
+
+        // ✅ Handle further actions if required
+        // this.updateComment(result); // Optional if needed
+      })
+      .catch(err => {
+        console.error('Error updating form:', err);
+      });
+  };
+
+  const handelUpdateComment = (a, b, c) => {
+    console.log('handelUpdateComment-------called', a, b, c);
+
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+    myHeaders.append(
+      'Authorization',
+      `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzNDg2NDg3LCJpYXQiOjE3NDI4ODE2ODcsImp0aSI6IjljOTY1YTcyN2ZmMTQwZWU5YTE1NWI2ZjVjNWZhMTMwIiwidXNlcl9pZCI6MTF9.5LY7QnfaIuod-o0i3DlAH3Quv8y-caX-oHtmDQ8QRgY`,
+    );
+
+    const raw = JSON.stringify({
+      comment: comment,
+      form_data: b,
+      transition: c,
+    });
+    console.log('handelUpdateComment------raw', raw);
+
+    const requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow',
+    };
+    console.log('handelUpdateComment requestoptios', requestOptions);
+
+    fetch(`${BASE_URL}workflow/action/?bulk=true`, requestOptions)
+      .then(response => response.text())
+      .then(result => {
+        console.log('handelUpdateComment.  successfully----called', result);
+        Alert.alert('Successfully updated', 'Comment added successfully', [
+          {text: 'OK'},
+        ]);
+        GetTemplateData(TemplateID);
+        closeModal();
+      })
+      .catch(error => console.error(error));
   };
 
   const handleActionPress = action => {
@@ -350,7 +476,7 @@ const Templates = ({navigation, route}) => {
 
             {/* Table Data */}
             <FlatList
-              data={filteredData} // ✅ Use filtered data
+              data={filteredData.length > 0 ? filteredData : templateData}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({item, index}) => (
                 <View
