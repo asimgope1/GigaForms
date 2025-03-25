@@ -26,6 +26,7 @@ import DateTimePickerComponent from './DateTimePickerComponent';
 import {CheckBox} from 'react-native-elements';
 import {Image} from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import {getObjByKey} from '../../utils/Storage';
 
 const FormsTemplates = ({navigation, route}) => {
   const [formData, setFormData] = useState({});
@@ -37,6 +38,7 @@ const FormsTemplates = ({navigation, route}) => {
   const [imageData, setImageData] = useState({});
   const [loading, setLoading] = useState(false);
   const [dropdownApiData, setDropdownApiData] = useState({});
+  const [token, SetToken] = useState();
 
   const clearFormState = () => {
     setFormData({});
@@ -70,15 +72,25 @@ const FormsTemplates = ({navigation, route}) => {
   useFocusEffect(
     useCallback(() => {
       const {data, id} = route.params;
+
+      const RetriveData = async () => {
+        const storedData = await getObjByKey('loginResponse');
+        // console.log('object storedData', storedData.access);
+        if (storedData) {
+          SetToken(storedData?.access);
+        }
+      };
       console.log('id: ' + id);
       GetFields(id);
       setFormData(data[0] || {});
       setError({});
       setOpenDropdown({});
       setDropdownValues({});
+      RetriveData();
 
       return () => {
         clearFormState();
+        RetriveData();
       };
     }, [navigation]),
   );
@@ -134,10 +146,7 @@ const FormsTemplates = ({navigation, route}) => {
     setLoading(true);
     try {
       const myHeaders = new Headers();
-      myHeaders.append(
-        'Authorization',
-        'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQyODA2OTEwLCJpYXQiOjE3NDIyMDIxMTAsImp0aSI6ImE5MzIyMTRmNTRkNDRiMWM4MjExNTY1M2U1OWVjZGMzIiwidXNlcl9pZCI6MTJ9.sP922W5FhChSMoYsg9ToQkjnaHc4f3CE22U45zyu-Ro',
-      );
+      myHeaders.append(`Authorization', 'Bearer ${token}`);
 
       const requestOptions = {
         method: 'GET',
@@ -145,7 +154,7 @@ const FormsTemplates = ({navigation, route}) => {
         redirect: 'follow',
       };
 
-      const url = `https://api.tatapowergatepass.epsumlabs.in/forms/template/${masterCode}/data/`;
+      const url = `${BASE_URL}forms/template/${masterCode}/data/`;
       console.log('Fetching options from:', url);
 
       const response = await fetch(url, requestOptions);

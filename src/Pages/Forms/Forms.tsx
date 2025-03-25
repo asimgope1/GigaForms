@@ -23,7 +23,7 @@ import {useFocusEffect} from '@react-navigation/native';
 
 const Forms = ({navigation, route}) => {
   useEffect(() => {
-    console.log('Route params:', route.params);
+    // console.log('Route params:', route.params);
 
     const storeData = async () => {
       try {

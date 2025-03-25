@@ -149,7 +149,7 @@ const Templates = ({navigation, route}) => {
     RetriveData();
 
     fetchData();
-  }, []); // ✅ Empty dependency array to run only once
+  }, [navigation, route.params]); // ✅ Empty dependency array to run only once
 
   const GetTemplateData = async id => {
     console.log('id', id);
