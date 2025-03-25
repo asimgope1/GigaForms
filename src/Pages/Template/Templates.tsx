@@ -12,7 +12,14 @@ import {
 import React, {Fragment, useEffect, useState} from 'react';
 import {IconButton} from 'react-native-paper';
 import {HEIGHT, MyStatusBar} from '../../constants/config';
-import {BLACK, DARKGREEN, GREEN, GRAY, WHITE} from '../../constants/color';
+import {
+  BLACK,
+  DARKGREEN,
+  GREEN,
+  GRAY,
+  WHITE,
+  BRAND,
+} from '../../constants/color';
 import TitleHeader from '../Forms/TitleHeader';
 import {GETNETWORK} from '../../utils/Network';
 import {BASE_URL} from '../../constants/url';
@@ -22,6 +29,8 @@ import {splashStyles} from '../Splash/SplashStyles';
 import {styless} from '../Forms/Forms';
 import {CheckBox} from 'react-native-elements';
 import {Loader} from '../../components/Loader';
+import {Calendar} from 'react-native-calendars';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const Templates = ({navigation, route}) => {
   const [templates, setTemplates] = useState({});
@@ -37,6 +46,34 @@ const Templates = ({navigation, route}) => {
   const [selectedFieldData, setSelectedFieldData] = useState(null);
   const [comment, setComment] = useState('');
   const [userDetails, setUserDetails] = useState<any>(null); // State for user details
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
+  const [selectedTime, setSelectedTime] = useState(
+    new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  );
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const clearState = () => {
+    const currentDate = new Date();
+    setSelectedDate(currentDate.toISOString().split('T')[0]); // Format: YYYY-MM-DD
+
+    const formattedTime = currentDate.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    setSelectedTime(formattedTime); // Format: HH:mm:ss
+
+    setComment('');
+    setShowCalendar(false);
+    setShowTimePicker(false);
+    closeModal(); // Close the modal after resetting
+  };
 
   const getProfileData = async () => {
     setLoading(true);
@@ -145,6 +182,16 @@ const Templates = ({navigation, route}) => {
       setIsModalVisible(true);
     } else {
       alert('Please select an item to proceed.');
+    }
+  };
+  const onTimeChange = (event, selected) => {
+    setShowTimePicker(Platform.OS === 'ios'); // Show only for iOS
+    if (selected) {
+      const formattedTime = selected.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      setSelectedTime(formattedTime);
     }
   };
 
@@ -333,9 +380,79 @@ const Templates = ({navigation, route}) => {
                 }}>
                 Date:
               </Text>
-              <Text style={{color: BLACK, fontSize: 18, marginTop: 5}}>
+              {/* <Text style={{color: BLACK, fontSize: 18, marginTop: 5}}>
                 {new Date().toISOString().split('T')[0]}
-              </Text>
+              </Text> */}
+              <TouchableOpacity
+                style={{
+                  width: '100%',
+                  height: 50,
+                  borderWidth: 1,
+                  borderColor: '#ccc',
+                  borderRadius: 8,
+                  padding: 12,
+                  justifyContent: 'center',
+                  backgroundColor: '#f5f5f5',
+                }}
+                onPress={() => setShowCalendar(true)}>
+                <Text style={{color: '#000', fontSize: 16}}>
+                  {selectedDate || 'Select Date'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Show Calendar in Modal */}
+              {showCalendar && (
+                <Modal
+                  transparent={true}
+                  animationType="slide"
+                  onRequestClose={() => setShowCalendar(false)}>
+                  <View
+                    style={{
+                      flex: 1,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    }}>
+                    <View
+                      style={{
+                        backgroundColor: '#fff',
+                        borderRadius: 12,
+                        padding: 10,
+                        width: '90%',
+                      }}>
+                      <Calendar
+                        onDayPress={day => {
+                          setSelectedDate(day.dateString);
+                          setShowCalendar(false);
+                        }}
+                        markedDates={{
+                          [selectedDate]: {
+                            selected: true,
+                            marked: true,
+                            dotColor: '#00adf5',
+                          },
+                        }}
+                        theme={{
+                          selectedDayBackgroundColor: '#00adf5',
+                          todayTextColor: '#00adf5',
+                          arrowColor: '#00adf5',
+                        }}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowCalendar(false)}
+                        style={{
+                          marginTop: 10,
+                          padding: 10,
+                          backgroundColor: '#ccc',
+                          borderRadius: 8,
+                          alignItems: 'center',
+                        }}>
+                        <Text style={{color: '#000'}}>Close Calendar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              )}
 
               {/* Time Section */}
               <Text
@@ -347,13 +464,33 @@ const Templates = ({navigation, route}) => {
                 }}>
                 Time:
               </Text>
-              <Text style={{color: BLACK, fontSize: 18, marginTop: 5}}>
-                {new Date().toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                })}
-              </Text>
+              <TouchableOpacity
+                style={{
+                  width: '100%',
+                  height: 50,
+                  borderWidth: 1,
+                  borderColor: '#ccc',
+                  borderRadius: 8,
+                  padding: 12,
+                  justifyContent: 'center',
+                  backgroundColor: '#f5f5f5',
+                }}
+                onPress={() => setShowTimePicker(true)}>
+                <Text style={{color: '#000', fontSize: 16}}>
+                  {selectedTime || 'Select Time'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Show Time Picker */}
+              {showTimePicker && (
+                <DateTimePicker
+                  value={new Date()}
+                  mode="time"
+                  is24Hour={false}
+                  display="default"
+                  onChange={onTimeChange}
+                />
+              )}
             </ScrollView>
 
             {/* Comment Section */}
@@ -392,7 +529,10 @@ const Templates = ({navigation, route}) => {
                   borderRadius: 8,
                   alignItems: 'center',
                 }}
-                onPress={closeModal}>
+                onPress={() => {
+                  closeModal();
+                  clearState();
+                }}>
                 <Text style={{color: '#000', fontWeight: 'bold'}}>Cancel</Text>
               </TouchableOpacity>
 
