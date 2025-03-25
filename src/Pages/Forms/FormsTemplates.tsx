@@ -39,6 +39,7 @@ const FormsTemplates = ({navigation, route}) => {
   const [loading, setLoading] = useState(false);
   const [dropdownApiData, setDropdownApiData] = useState({});
   const [token, SetToken] = useState();
+  const [templateId, setTemplateId] = useState();
 
   const clearFormState = () => {
     setFormData({});
@@ -50,6 +51,7 @@ const FormsTemplates = ({navigation, route}) => {
   };
 
   const GetFields = async id => {
+    setTemplateId(id);
     const url = `${BASE_URL}forms/template/${id}/fields/`;
 
     try {
@@ -142,11 +144,12 @@ const FormsTemplates = ({navigation, route}) => {
   };
 
   // ✅ Fetch dropdown options based on master_data_code
+  // ✅ Fetch dropdown options without default fallback
   const fetchDropdownOptions = async masterCode => {
     setLoading(true);
     try {
       const myHeaders = new Headers();
-      myHeaders.append(`Authorization', 'Bearer ${token}`);
+      myHeaders.append('Authorization', `Bearer ${token}`);
 
       const requestOptions = {
         method: 'GET',
@@ -173,32 +176,25 @@ const FormsTemplates = ({navigation, route}) => {
         }));
       } else {
         console.warn(
-          `No valid data for masterCode ${masterCode}. Using defaults.`,
+          `No valid options available for masterCode: ${masterCode}`,
         );
+        // ✅ Set an empty array if no valid data is found
         setDropdownApiData(prevData => ({
           ...prevData,
-          [masterCode]: getDefaultOptions(),
+          [masterCode]: [],
         }));
       }
     } catch (error) {
       console.error('Error fetching dropdown options:', error);
+      // ✅ Set an empty array in case of error
       setDropdownApiData(prevData => ({
         ...prevData,
-        [masterCode]: getDefaultOptions(),
+        [masterCode]: [],
       }));
     } finally {
-      // ✅ Keep loader for at least 10 seconds
-      setTimeout(() => {
-        setLoading(false); // ✅ Stop loader after 10 sec
-      }, 2000);
+      setLoading(false);
     }
   };
-  // ✅ Get default options if API fails or is empty
-  const getDefaultOptions = () => [
-    {label: '1', value: '1'},
-    {label: '2', value: '2'},
-    {label: '3', value: '3'},
-  ];
 
   // ✅ Fetch API when fields data is loaded
   useEffect(() => {
@@ -210,7 +206,7 @@ const FormsTemplates = ({navigation, route}) => {
   }, [fieldsData]);
 
   const renderField = (field, index) => {
-    console.log(field.values, 'fieldfieldfieldfield', field.id);
+    // console.log(field.values, 'fieldfieldfieldfield', field.id);
     // console.log(field.master_data_code, 'master_data_code');
 
     switch (field.type) {
@@ -407,25 +403,71 @@ const FormsTemplates = ({navigation, route}) => {
       return;
     }
 
-    let formDetails = fieldsData.map(field => ({
-      id: field.id,
-      label: field.label,
-      value: formData[field.label] || 'N/A',
-    }));
+    // ✅ Prepare the form data in the required format
+    let formDetails = fieldsData.map(field => {
+      let value = formData[field.label] || 'N/A'; // Use form data or 'N/A' if not present
 
-    const alertMessage = formDetails
-      .map(field => `ID: ${field.id}, ${field.label}: ${field.value}`)
-      .join('\n');
+      // If the value is boolean, convert it to a string
+      if (typeof value === 'boolean') {
+        value = value.toString();
+      }
 
-    Alert.alert('Form Submitted Successfully!', alertMessage, [
-      {
-        text: 'OK',
-        onPress: () => {
-          clearFormState();
-          navigation.navigate('Forms');
-        },
-      },
-    ]);
+      return {
+        value: value, // The value to be sent
+        field: field.id, // The field ID
+      };
+    });
+
+    // Create the payload with 'data' and 'template'
+    const payload = {
+      data: formDetails, // The field data array
+      template: templateId || 'N/A', // Include templateId, fallback to 'N/A' if not available
+    };
+
+    console.log('Payload:', payload); // Log the payload to the console
+
+    // Set up headers for the API request
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+    myHeaders.append('Authorization', `Bearer ${token}`);
+
+    // Define the raw payload (this can be dynamically updated with your data)
+    const raw = JSON.stringify(payload);
+
+    // Define the request options
+    const requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow',
+    };
+
+    setLoading(true);
+
+    // Make the API call with fetch
+    fetch(`${BASE_URL}forms/data/`, requestOptions)
+      .then(response => response.json()) // Handle JSON response
+      .then(result => {
+        console.log('API Response:', result); // Log the result
+        setLoading(false);
+
+        // Check if the response indicates success
+        if (result && result.id) {
+          // Handle successful submission here (no alert)
+          console.log('Form submitted successfully!', result);
+          setLoading(false);
+          navigation.navigate('Forms'); // Navigate to Forms page
+          clearFormState(); // Clear the form
+        } else {
+          // Handle failure if needed
+          console.error('Submission Failed:', result);
+          setLoading(false);
+        }
+      })
+      .catch(error => {
+        console.error('Error during API call:', error); // Handle any errors
+        setLoading(false);
+      });
   };
 
   return (
