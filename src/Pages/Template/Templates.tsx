@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import React, {Fragment, useEffect, useState} from 'react';
 import {IconButton} from 'react-native-paper';
@@ -51,8 +52,11 @@ const Templates = ({navigation, route}) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRowData, setSelectedRowData] = useState({});
+  const [token, SetToken] = useState();
+  const [refreshing, setRefreshing] = useState(false);
 
   const [filteredData, setFilteredData] = useState(templateData);
+  const [TemplateID, SetTemplateId] = useState('');
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0],
@@ -101,8 +105,17 @@ const Templates = ({navigation, route}) => {
     getProfileData();
     console.log('route?.params0', route?.params);
 
+    const RetriveData = async () => {
+      const storedData = await getObjByKey('loginResponse');
+      // console.log('object storedData', storedData.access);
+      if (storedData) {
+        SetToken(storedData?.access);
+      }
+    };
+
     // Fetch template data immediately on initial render
     const fetchData = async () => {
+      setLoading(true);
       try {
         console.log('route?.params1', route?.params);
         // ✅ Store route params if available
@@ -135,11 +148,14 @@ const Templates = ({navigation, route}) => {
       }
     };
 
+    RetriveData();
+
     fetchData();
   }, []); // ✅ Empty dependency array to run only once
 
   const GetTemplateData = async id => {
     console.log('id', id);
+    resetSelectedItems();
     // if (!id) return;
     try {
       const url = `${BASE_URL}forms/custumlink/${id}/data/`;
@@ -181,6 +197,7 @@ const Templates = ({navigation, route}) => {
   const closeModal = () => {
     setIsModalVisible(false);
     setSelectedFieldData(null);
+    resetSelectedItems();
     setComment('');
   };
 
@@ -222,10 +239,7 @@ const Templates = ({navigation, route}) => {
     // ✅ Prepare request headers
     const myHeaders = new Headers();
     myHeaders.append('Content-Type', 'application/json');
-    myHeaders.append(
-      'Authorization',
-      `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzNDg2NDg3LCJpYXQiOjE3NDI4ODE2ODcsImp0aSI6IjljOTY1YTcyN2ZmMTQwZWU5YTE1NWI2ZjVjNWZhMTMwIiwidXNlcl9pZCI6MTF9.5LY7QnfaIuod-o0i3DlAH3Quv8y-caX-oHtmDQ8QRgY`,
-    );
+    myHeaders.append('Authorization', `Bearer ${token}`);
 
     // ✅ Stringify request body
     const raw = JSON.stringify(requestBody);
@@ -264,10 +278,7 @@ const Templates = ({navigation, route}) => {
 
     const myHeaders = new Headers();
     myHeaders.append('Content-Type', 'application/json');
-    myHeaders.append(
-      'Authorization',
-      `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzNDg2NDg3LCJpYXQiOjE3NDI4ODE2ODcsImp0aSI6IjljOTY1YTcyN2ZmMTQwZWU5YTE1NWI2ZjVjNWZhMTMwIiwidXNlcl9pZCI6MTF9.5LY7QnfaIuod-o0i3DlAH3Quv8y-caX-oHtmDQ8QRgY`,
-    );
+    myHeaders.append('Authorization', `Bearer ${token}`);
 
     const raw = JSON.stringify({
       comment: comment,
@@ -292,6 +303,8 @@ const Templates = ({navigation, route}) => {
           {text: 'OK'},
         ]);
         GetTemplateData(TemplateID);
+        resetSelectedItems();
+
         closeModal();
       })
       .catch(error => console.error(error));
@@ -352,110 +365,117 @@ const Templates = ({navigation, route}) => {
       setLoading(false); // ✅ Hide Loader after reset completes
     }, 1000); // Optional delay for smoother loader effect
   };
+  const handleRefresh = async () => {
+    console.log('Refreshing data...');
+    setRefreshing(true); // ✅ Show loader while refreshing
+
+    try {
+      const storedData = await getObjByKey('routeTemplates');
+      if (storedData && storedData?.tamplateId?.id) {
+        console.log('Refreshing template with ID:', storedData?.tamplateId?.id);
+        await GetTemplateData(storedData?.tamplateId?.id); // ✅ Refresh data by fetching template again
+      } else {
+        console.log('No template ID found for refresh');
+      }
+    } catch (error) {
+      console.error('Error while refreshing data:', error);
+    } finally {
+      setRefreshing(false); // ✅ Hide loader after refresh
+    }
+  };
+
+  const resetSelectedItems = () => {
+    setCheckedItems({}); // ✅ Clear selected checkboxes
+    setIsAnyChecked(false); // ✅ Reset 'isAnyChecked'
+  };
 
   return (
     <Fragment>
       <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
       <SafeAreaView style={splashStyles.maincontainer}>
-        <TitleHeader
-          title="Template Data View"
-          onPress={() => navigation.goBack()}
-        />
-
-        {/* Subheader */}
-        <View style={styless.subheaderContainer}>
-          <Text style={styless.subheaderText}>
-            {loading
-              ? 'Loading...'
-              : templates?.tamplateId?.template_name || 'No Template Found'}
-          </Text>
-        </View>
-
-        {/* Search & Filter Section */}
-        <View style={styless.container}>
-          {/* Dropdown with Table Headers */}
-          <DropdownComponent
-            data={tableHeaders.map(header => ({
-              label: header,
-              value: header,
-            }))}
-            value={value}
-            onChange={selected => {
-              setValue(selected); // Set the selected header in the dropdown
-            }}
+        <ScrollView
+          contentContainerStyle={{flexGrow: 1}}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }>
+          <TitleHeader
+            title="Template Data View"
+            onPress={() => navigation.goBack()}
           />
 
-          {/* TextInput for Search Term */}
-          <TextInput
-            style={[styless.input, {marginVertical: 10, borderColor: GRAY}]}
-            placeholder="Enter ..."
-            placeholderTextColor={BLACK}
-            value={searchText}
-            onChangeText={setSearchText}
-          />
-
-          {/* Search and Reset Buttons */}
-          <View style={{flexDirection: 'row', marginBottom: 10}}>
-            <IconButton
-              icon="magnify"
-              size={24}
-              onPress={handleSearch} // Trigger Search on Press
-              style={styless.iconButton}
-            />
-            <IconButton
-              icon="refresh"
-              size={24}
-              onPress={handleReset} // Reset the search and filters
-              style={styless.iconButton}
-            />
+          {/* Subheader */}
+          <View style={styless.subheaderContainer}>
+            <Text style={styless.subheaderText}>
+              {loading
+                ? 'Loading...'
+                : templates?.tamplateId?.template_name || 'No Template Found'}
+            </Text>
           </View>
-        </View>
 
-        {/* Table Section */}
-        {/* Table Section */}
-        <ScrollView horizontal>
-          <View style={{minWidth: tableHeaders.length * WIDTH * 0.25}}>
-            {/* Table Header */}
-            <View
-              style={{
-                flexDirection: 'row',
-                backgroundColor: '#e0e0e0',
-                borderBottomWidth: 2,
-                borderColor: '#ccc',
-                paddingVertical: 12,
-                paddingHorizontal: 5,
-              }}>
-              {/* Select Column Header */}
+          {/* Search & Filter Section */}
+          <View style={styless.container}>
+            {/* Dropdown with Table Headers */}
+            <DropdownComponent
+              data={tableHeaders.map(header => ({
+                label: header,
+                value: header,
+              }))}
+              value={value}
+              onChange={selected => {
+                setValue(selected); // Set the selected header in the dropdown
+              }}
+            />
+
+            {/* TextInput for Search Term */}
+            <TextInput
+              style={[styless.input, {marginVertical: 10, borderColor: GRAY}]}
+              placeholder="Enter ..."
+              placeholderTextColor={BLACK}
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+
+            {/* Search and Reset Buttons */}
+            <View style={{flexDirection: 'row', marginBottom: 10}}>
+              <IconButton
+                icon="magnify"
+                size={24}
+                onPress={handleSearch} // Trigger Search on Press
+                style={styless.iconButton}
+              />
+              <IconButton
+                icon="refresh"
+                size={24}
+                onPress={handleReset} // Reset the search and filters
+                style={styless.iconButton}
+              />
+            </View>
+          </View>
+
+          {/* Table Section */}
+          {/* Table Section */}
+          <ScrollView horizontal>
+            <View style={{minWidth: tableHeaders.length * WIDTH * 0.25}}>
+              {/* Table Header */}
               <View
                 style={{
-                  width: 70,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  paddingVertical: 12,
-                  borderRightWidth: 1,
+                  flexDirection: 'row',
+                  backgroundColor: '#e0e0e0',
+                  borderBottomWidth: 2,
                   borderColor: '#ccc',
+                  paddingVertical: 12,
+                  paddingHorizontal: 5,
                 }}>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 'bold',
-                    color: '#333',
-                    textAlign: 'center',
-                  }}>
-                  Select
-                </Text>
-              </View>
-
-              {/* Dynamic Table Headers */}
-              {tableHeaders.map((header, idx) => (
+                {/* Select Column Header */}
                 <View
-                  key={idx}
                   style={{
-                    width: WIDTH * 0.25,
+                    width: 70,
                     justifyContent: 'center',
                     alignItems: 'center',
                     paddingVertical: 12,
-                    borderRightWidth: idx === tableHeaders.length - 1 ? 0 : 1,
+                    borderRightWidth: 1,
                     borderColor: '#ccc',
                   }}>
                   <Text
@@ -464,201 +484,227 @@ const Templates = ({navigation, route}) => {
                       fontWeight: 'bold',
                       color: '#333',
                       textAlign: 'center',
-                      flexWrap: 'wrap',
-                    }}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    {header}
+                    }}>
+                    Select
                   </Text>
                 </View>
-              ))}
-            </View>
 
-            {/* Table Data */}
-            <FlatList
-              data={filteredData.length > 0 ? filteredData : templateData}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({item, index}) => (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    backgroundColor:
-                      index % 2 === 0 ? '#fff' : 'rgba(0,0,0,0.05)',
-                    paddingVertical: 5,
-                    borderBottomWidth: 1,
-                    borderColor: '#ccc',
-                  }}>
-                  {/* Checkbox & Eye Icon */}
-                  <View
-                    style={{
-                      width: 70,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      flexDirection: 'row',
-                      paddingVertical: 5,
-                      borderRightWidth: 1,
-                      borderColor: '#ccc',
-                    }}>
-                    <CheckBox
-                      checked={!!checkedItems[index]}
-                      onPress={() => toggleCheckbox(index, item)}
-                      containerStyle={{
-                        padding: 0,
-                        marginRight: 5,
-                      }}
-                    />
-                    <TouchableOpacity onPress={() => handleViewDetails(item)}>
-                      <FontAwesome name="eye" size={22} color={'blue'} />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Data Cells */}
-                  {tableHeaders.map((header, idx) => (
-                    <View
-                      key={`${index}-${idx}`}
-                      style={{
-                        width: WIDTH * 0.25,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        paddingVertical: 12,
-                        borderRightWidth:
-                          idx === tableHeaders.length - 1 ? 0 : 1,
-                        borderColor: '#ccc',
-                      }}>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: '#333',
-                          textAlign: 'center',
-                          flexWrap: 'wrap',
-                        }}
-                        numberOfLines={1}
-                        ellipsizeMode="tail">
-                        {item?.[header] ?? 'N/A'}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            />
-          </View>
-        </ScrollView>
-
-        {/* Action Buttons */}
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            marginVertical: HEIGHT * 0.07,
-          }}>
-          {actions.map(action => (
-            <TouchableOpacity
-              key={action.id}
-              onPress={() => handleActionPress(action)}
-              disabled={!isAnyChecked}
-              style={{
-                backgroundColor:
-                  action.properties === 'btn btn-success' ? GREEN : 'red',
-                padding: 12,
-                marginHorizontal: 5,
-                borderRadius: 8,
-                opacity: isAnyChecked ? 1 : 0.5,
-              }}>
-              <Text style={{color: '#fff', fontWeight: 'bold'}}>
-                {action.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}>
-          <View
-            style={{
-              flex: 1,
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: 'rgba(0,0,0,0.5)',
-            }}>
-            <View
-              style={{
-                width: '90%',
-                backgroundColor: '#fff',
-                padding: 20,
-                borderRadius: 10,
-              }}>
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: 'bold',
-                  marginBottom: 15,
-                  textAlign: 'center',
-                }}>
-                Row Details
-              </Text>
-
-              <ScrollView
-                style={{
-                  maxHeight: HEIGHT * 0.5,
-                }}>
-                {Object.keys(selectedRowData).map((key, idx) => (
+                {/* Dynamic Table Headers */}
+                {tableHeaders.map((header, idx) => (
                   <View
                     key={idx}
                     style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      paddingVertical: 5,
-                      borderBottomWidth: 1,
-                      borderColor: '#eee',
+                      width: WIDTH * 0.25,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      paddingVertical: 12,
+                      borderRightWidth: idx === tableHeaders.length - 1 ? 0 : 1,
+                      borderColor: '#ccc',
                     }}>
                     <Text
                       style={{
                         fontSize: 14,
                         fontWeight: 'bold',
                         color: '#333',
-                      }}>
-                      {key.replace(/_/g, ' ')}:
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        color: '#555',
-                        flexShrink: 1,
-                        textAlign: 'right',
+                        textAlign: 'center',
+                        flexWrap: 'wrap',
                       }}
                       numberOfLines={1}
                       ellipsizeMode="tail">
-                      {selectedRowData[key]?.toString() || 'N/A'}
+                      {header}
                     </Text>
                   </View>
                 ))}
-              </ScrollView>
+              </View>
 
-              {/* Close Button */}
+              {/* Table Data */}
+              <FlatList
+                data={filteredData.length > 0 ? filteredData : templateData}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({item, index}) => (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      backgroundColor:
+                        index % 2 === 0 ? '#fff' : 'rgba(0,0,0,0.05)',
+                      paddingVertical: 5,
+                      borderBottomWidth: 1,
+                      borderColor: '#ccc',
+                    }}>
+                    {/* Checkbox & Eye Icon */}
+                    <View
+                      style={{
+                        width: 70,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        flexDirection: 'row',
+                        paddingVertical: 5,
+                        borderRightWidth: 1,
+                        borderColor: '#ccc',
+                      }}>
+                      <CheckBox
+                        checked={!!checkedItems[index]}
+                        onPress={() => toggleCheckbox(index, item)}
+                        containerStyle={{
+                          padding: 0,
+                          marginRight: 5,
+                        }}
+                      />
+                      <TouchableOpacity onPress={() => handleViewDetails(item)}>
+                        <FontAwesome name="eye" size={22} color={'blue'} />
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Data Cells */}
+                    {tableHeaders.map((header, idx) => (
+                      <View
+                        key={`${index}-${idx}`}
+                        style={{
+                          width: WIDTH * 0.25,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          paddingVertical: 12,
+                          borderRightWidth:
+                            idx === tableHeaders.length - 1 ? 0 : 1,
+                          borderColor: '#ccc',
+                        }}>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: '#333',
+                            textAlign: 'center',
+                            flexWrap: 'wrap',
+                          }}
+                          numberOfLines={1}
+                          ellipsizeMode="tail">
+                          {item?.[header] ?? 'N/A'}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
+            </View>
+          </ScrollView>
+
+          {/* Action Buttons */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'center',
+              marginVertical: HEIGHT * 0.07,
+            }}>
+            {actions.map(action => (
               <TouchableOpacity
-                onPress={() => setModalVisible(false)}
+                key={action.id}
+                onPress={() => handleActionPress(action)}
+                disabled={!isAnyChecked}
                 style={{
-                  marginTop: 15,
-                  backgroundColor: '#ff4d4d',
-                  paddingVertical: 10,
+                  backgroundColor:
+                    action.properties === 'btn btn-success' ? GREEN : 'red',
+                  padding: 12,
+                  marginHorizontal: 5,
                   borderRadius: 8,
-                  alignItems: 'center',
+                  opacity: isAnyChecked ? 1 : 0.5,
+                }}>
+                <Text style={{color: '#fff', fontWeight: 'bold'}}>
+                  {action.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: 'rgba(0,0,0,0.5)',
+              }}>
+              <View
+                style={{
+                  width: '90%',
+                  backgroundColor: '#fff',
+                  padding: 20,
+                  borderRadius: 10,
                 }}>
                 <Text
                   style={{
-                    color: '#fff',
+                    fontSize: 18,
                     fontWeight: 'bold',
-                    fontSize: 16,
+                    marginBottom: 15,
+                    textAlign: 'center',
                   }}>
-                  Close
+                  Row Details
                 </Text>
-              </TouchableOpacity>
+
+                <ScrollView
+                  style={{
+                    maxHeight: HEIGHT * 0.5,
+                  }}>
+                  {Object.keys(selectedRowData).map((key, idx) => (
+                    <View
+                      key={idx}
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        paddingVertical: 5,
+                        borderBottomWidth: 1,
+                        borderColor: '#eee',
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 'bold',
+                          color: '#333',
+                        }}>
+                        {key.replace(/_/g, ' ')}:
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          color: '#555',
+                          flexShrink: 1,
+                          textAlign: 'right',
+                        }}
+                        numberOfLines={1}
+                        ellipsizeMode="tail">
+                        {selectedRowData[key]?.toString() || 'N/A'}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+
+                {/* Close Button */}
+                <TouchableOpacity
+                  onPress={() => setModalVisible(false)}
+                  style={{
+                    marginTop: 15,
+                    backgroundColor: '#ff4d4d',
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: 16,
+                    }}>
+                    Close
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </Modal>
+          </Modal>
+        </ScrollView>
       </SafeAreaView>
 
       {/* Modal for Selected Item Details */}
