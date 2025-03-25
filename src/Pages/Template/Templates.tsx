@@ -11,7 +11,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import React, {Fragment, useEffect, useState} from 'react';
+import React, {Fragment, useCallback, useEffect, useState} from 'react';
 import {IconButton} from 'react-native-paper';
 import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {
@@ -34,6 +34,7 @@ import {Loader} from '../../components/Loader';
 import {Calendar} from 'react-native-calendars';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import {useFocusEffect} from '@react-navigation/native';
 
 const Templates = ({navigation, route}) => {
   const [templates, setTemplates] = useState({});
@@ -154,6 +155,7 @@ const Templates = ({navigation, route}) => {
   }, [navigation, route.params]); // ✅ Empty dependency array to run only once
 
   const GetTemplateData = async id => {
+    setLoading(true);
     console.log('id', id);
     resetSelectedItems();
     // if (!id) return;
@@ -177,6 +179,8 @@ const Templates = ({navigation, route}) => {
       }
     } catch (error) {
       console.error('Error fetching template data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -358,12 +362,10 @@ const Templates = ({navigation, route}) => {
   const handleReset = () => {
     setLoading(true); // ✅ Show Loader
 
-    setTimeout(() => {
-      setSearchText('');
-      setValue('');
-      setFilteredData(templateData); // ✅ Reset to original data
-      setLoading(false); // ✅ Hide Loader after reset completes
-    }, 1000); // Optional delay for smoother loader effect
+    setSearchText('');
+    setValue('');
+    setFilteredData(templateData); // ✅ Reset to original data
+    setLoading(false); // ✅ Hide Loader after reset completes
   };
   const handleRefresh = async () => {
     console.log('Refreshing data...');
@@ -393,6 +395,19 @@ const Templates = ({navigation, route}) => {
     <Fragment>
       <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
       <SafeAreaView style={splashStyles.maincontainer}>
+        <TitleHeader
+          title="Template Data View"
+          onPress={() => navigation.goBack()}
+        />
+
+        {/* Subheader */}
+        <View style={styless.subheaderContainer}>
+          <Text style={styless.subheaderText}>
+            {loading
+              ? 'Loading...'
+              : templates?.tamplateId?.template_name || 'No Template Found'}
+          </Text>
+        </View>
         <ScrollView
           contentContainerStyle={{flexGrow: 1}}
           keyboardShouldPersistTaps="handled"
@@ -400,20 +415,6 @@ const Templates = ({navigation, route}) => {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }>
-          <TitleHeader
-            title="Template Data View"
-            onPress={() => navigation.goBack()}
-          />
-
-          {/* Subheader */}
-          <View style={styless.subheaderContainer}>
-            <Text style={styless.subheaderText}>
-              {loading
-                ? 'Loading...'
-                : templates?.tamplateId?.template_name || 'No Template Found'}
-            </Text>
-          </View>
-
           {/* Search & Filter Section */}
           <View style={styless.container}>
             {/* Dropdown with Table Headers */}
@@ -590,7 +591,7 @@ const Templates = ({navigation, route}) => {
           </ScrollView>
 
           {/* Action Buttons */}
-          <View
+          {/* <View
             style={{
               flexDirection: 'row',
               justifyContent: 'center',
@@ -614,7 +615,7 @@ const Templates = ({navigation, route}) => {
                 </Text>
               </TouchableOpacity>
             ))}
-          </View>
+          </View> */}
 
           <Modal
             animationType="slide"
@@ -705,6 +706,33 @@ const Templates = ({navigation, route}) => {
             </View>
           </Modal>
         </ScrollView>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            marginVertical: HEIGHT * 0.05,
+            paddingVertical: 12,
+            backgroundColor: '#fff',
+          }}>
+          {actions.map(action => (
+            <TouchableOpacity
+              key={action.id}
+              onPress={() => handleActionPress(action)}
+              disabled={!isAnyChecked}
+              style={{
+                backgroundColor:
+                  action.properties === 'btn btn-success' ? GREEN : 'red',
+                padding: 12,
+                marginHorizontal: 5,
+                borderRadius: 8,
+                opacity: isAnyChecked ? 1 : 0.5,
+              }}>
+              <Text style={{color: '#fff', fontWeight: 'bold'}}>
+                {action.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </SafeAreaView>
 
       {/* Modal for Selected Item Details */}

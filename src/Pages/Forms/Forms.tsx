@@ -11,7 +11,14 @@ import {
 import React, {Fragment, useEffect, useState} from 'react';
 import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {splashStyles} from '../Splash/SplashStyles';
-import {BLACK, BRAND, DARKGREEN, LIGHTGRAY, WHITE} from '../../constants/color';
+import {
+  BLACK,
+  BRAND,
+  BRANDBLUE,
+  DARKGREEN,
+  LIGHTGRAY,
+  WHITE,
+} from '../../constants/color';
 import TitleHeader from './TitleHeader';
 import DropdownComponent from './DropdownComponent';
 import {IconButton} from 'react-native-paper'; // Import IconButton
@@ -252,7 +259,7 @@ const Forms = ({navigation, route}) => {
         {/* Buttons */}
         <View style={styless.buttonContainer}>
           <TouchableOpacity
-            style={[styless.button, {backgroundColor: 'blue'}]}
+            style={[styless.button, {backgroundColor: BRAND}]}
             onPress={() => {
               navigation.navigate('FormsDataView', {
                 selectedData: item,
@@ -288,7 +295,7 @@ const Forms = ({navigation, route}) => {
           <Pressable
             onPress={handleRightButtonClick}
             style={styless.rightButton}>
-            <Text style={styless.rightButtonText}>Add</Text>
+            <Text style={styless.rightButtonText}>ADD</Text>
           </Pressable>
         </View>
 
@@ -395,11 +402,11 @@ export const styless = StyleSheet.create({
   subheaderText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: DARKGREEN,
+    color: BRAND,
   },
   rightButton: {
     padding: 8,
-    backgroundColor: DARKGREEN,
+    backgroundColor: BRAND,
     borderRadius: 8,
   },
   rightButtonText: {
@@ -470,7 +477,7 @@ export const styless = StyleSheet.create({
     fontWeight: 'bold',
   },
   viewMoreText: {
-    color: DARKGREEN,
+    color: BRANDBLUE,
     fontSize: 16,
     textAlign: 'center',
     padding: 10,

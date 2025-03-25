@@ -12,7 +12,7 @@ import {
 import React, {Fragment, useCallback, useEffect, useState} from 'react';
 import {MyStatusBar, WIDTH} from '../../constants/config';
 import TitleHeader from './TitleHeader';
-import {BRAND, DARKGREEN} from '../../constants/color';
+import {BRAND, BRANDBLUE, DARKGREEN} from '../../constants/color';
 import {splashStyles} from '../Splash/SplashStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -92,6 +92,14 @@ const FormsDataView = ({navigation, route}) => {
       return () =>
         BackHandler.addEventListener('hardwareBackPress', handleBackPress);
     }, [route.params?.selectedData, handleBackPress]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      setIsExpanded(false); // This will collapse the "View More" section when coming back
+
+      storeAndSetData(route.params?.selectedData);
+    }, [route.params?.selectedData]),
   );
 
   // Convert object to key-value array, excluding unwanted fields
@@ -209,14 +217,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowOffset: {width: 0, height: 2},
     shadowRadius: 4,
-    marginBottom: 20,
+    marginBottom: 100,
     position: 'relative',
   },
   editButton: {
     position: 'absolute',
     top: -20,
     right: 0,
-    backgroundColor: DARKGREEN,
+    backgroundColor: BRANDBLUE,
     padding: 8,
     borderRadius: 5,
   },
@@ -240,7 +248,7 @@ const styles = StyleSheet.create({
   viewMoreText: {
     marginTop: 10,
     fontSize: 14,
-    color: 'blue',
+    color: BRANDBLUE,
     textAlign: 'right',
   },
 });

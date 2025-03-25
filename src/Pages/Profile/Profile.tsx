@@ -207,7 +207,7 @@ export const styles = StyleSheet.create({
   },
   avatar: {
     borderWidth: 3,
-    borderColor: '#4CAF50', // Border color to match profile theme
+    borderColor: BRAND, // Border color to match profile theme
   },
   userInfoContainer: {
     alignItems: 'center',
@@ -220,7 +220,7 @@ export const styles = StyleSheet.create({
   },
   userType: {
     fontSize: 16,
-    color: '#4CAF50', // Light green for user type
+    color: BRAND, // Light green for user type
     marginVertical: 5,
   },
   userEmail: {
@@ -234,7 +234,7 @@ export const styles = StyleSheet.create({
     marginVertical: 5,
   },
   editButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: BRAND,
     paddingVertical: 10,
     paddingHorizontal: 40,
     borderRadius: 25,
@@ -249,7 +249,7 @@ export const styles = StyleSheet.create({
   logoutButton: {
     backgroundColor: '#f44336', // Red for logout
     paddingVertical: 10,
-    paddingHorizontal: 40,
+    paddingHorizontal: 80,
     borderRadius: 25,
     alignItems: 'center',
   },

@@ -14,8 +14,6 @@ import LinearGradient from 'react-native-linear-gradient'; // Gradient for Backg
 import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {
   WHITE,
-  DARKGREEN,
-  GREEN,
   GRAY,
   BLACK,
   PURPLELIGHT,
