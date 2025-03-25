@@ -166,8 +166,13 @@ const Templates = ({navigation, route}) => {
   };
 
   const updateForm = () => {
-    console.log('Form Submitted with Comment:', comment);
-    closeModal();
+    console.log('selectedFieldData', selectedFieldData);
+    console.log('actions', actions);
+
+    // Extract all_form_id from each field
+    const allFormIds = selectedFieldData?.fields?.map(item => item.all_form_id);
+
+    console.log('All Form IDs:', allFormIds);
     alert('Form submitted successfully! 🎉');
   };
 
