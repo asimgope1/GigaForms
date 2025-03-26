@@ -162,6 +162,7 @@ const Templates = ({navigation, route}) => {
   const GetTemplateData = async id => {
     setLoading(true);
     console.log('id', id);
+    SetTemplateId(id);
     resetSelectedItems();
 
     try {
@@ -226,15 +227,19 @@ const Templates = ({navigation, route}) => {
     console.log('selectedFieldData', selectedFieldData);
     console.log('actions', actions);
 
-    // ✅ Map through fields dynamically and extract key-value pairs
-    const mappedData = selectedFieldData?.fields?.flatMap(item =>
-      Object.keys(item).map(key => {
-        return {
-          field: key, // Key as 'field'
-          value: item[key] || '', // Corresponding value
-        };
-      }),
-    );
+    // ✅ Map dynamically updated modal field values with matchedFieldData
+    const updatedMatchedData = matchedFieldData.map(item => ({
+      id: item.id, // ✅ Keep field ID
+      label: item.label, // ✅ Keep label
+      value: formData[item.label]?.toString().trim() || item.value || '', // ✅ Fetch updated value from formData
+    }));
+
+    console.log('Updated Matched Data 🚀:', updatedMatchedData);
+
+    const transformedData = updatedMatchedData.map(item => ({
+      value: item.value,
+      field: item.id, // ✅ Map `id` to `field`
+    }));
 
     // ✅ Extract all_form_id dynamically
     const allFormIds = selectedFieldData?.fields
@@ -242,24 +247,18 @@ const Templates = ({navigation, route}) => {
       .filter(id => id);
 
     console.log('All Form IDs:', allFormIds);
-    console.log('sTemplateID', TemplateID);
-
-    // ✅ Get matched field IDs (from state)
-    console.log(
-      'Matched Field IDs for update:55555555555555555555555555555555555',
-      matchedFieldIds,
-    );
+    console.log('Template ID:', TemplateID);
 
     // ✅ Prepare request body
     let requestBody = {
-      data: matchedFieldIds, // ✅ Add matched IDs to request body
+      data: transformedData, // ✅ Add updated matched IDs with new values
       template: TemplateID,
       is_delete: false,
       lock_status: 'N',
       all_form_id: allFormIds,
     };
 
-    console.log('updateForm-------called', requestBody);
+    console.log('updateForm request body:', requestBody);
 
     // ✅ Prepare request headers
     const myHeaders = new Headers();
@@ -268,7 +267,7 @@ const Templates = ({navigation, route}) => {
 
     // ✅ Stringify request body
     const raw = JSON.stringify(requestBody);
-    console.log('updateForm-------called----raw', raw);
+    console.log('updateForm payload:', raw);
 
     // ✅ Define request options
     const requestOptions = {
@@ -284,7 +283,9 @@ const Templates = ({navigation, route}) => {
     fetch(`${BASE_URL}forms/data/bulkupdate`, requestOptions)
       .then(async response => {
         const result = await response.json();
-        console.log('updated successfully----called', result);
+        console.log('Updated successfully! ✅', result);
+
+        // ✅ Call to add comments after successful update
         handelUpdateComment(comment, allFormIds, actions[0].id);
 
         // ✅ Close the modal after successful update
@@ -331,12 +332,25 @@ const Templates = ({navigation, route}) => {
       })
       .catch(error => console.error(error));
   };
+
   const handleActionPress = action => {
     const selectedItems = Object.values(checkedItems);
 
     if (selectedItems.length > 0) {
       setSelectedFieldData({fields: selectedItems});
       setIsModalVisible(true);
+
+      // ✅ Set initial formData correctly here
+      const initialFormData = {};
+      action.fields?.forEach(field => {
+        const defaultValue =
+          field.default === 'Current User' && userDetails
+            ? userDetails.name
+            : field.default || '';
+        initialFormData[field.label] = defaultValue;
+      });
+
+      setFormData(initialFormData); // ✅ Set formData initially
 
       // ✅ Save field labels in state
       if (action?.fields?.length > 0) {
@@ -356,12 +370,12 @@ const Templates = ({navigation, route}) => {
             return {
               id: matchedField?.id || '', // ✅ Matched field ID
               label: field.label, // ✅ Label
-              value: field.value || '', // ✅ Value (use field.value or empty if not found)
+              value: field.value || '', // ✅ Value
             };
           });
 
         setMatchedFieldData(matchedData); // ✅ Save matched data in state
-        console.log('Matched Field Data for Modal: 🚀🚀🚀', matchedData);
+        console.log('Matched Field Data for Modal: 🚀', matchedData);
       } else {
         setFieldLabels([]);
         setMatchedFieldData([]);
@@ -813,134 +827,64 @@ const Templates = ({navigation, route}) => {
                 borderRadius: 8,
               }}>
               {/* Loop through State_Action.fields */}
-              {actions[0]?.fields?.map((field, index) => {
-                // Check if default is "Current User"
-                const defaultValue =
-                  field.default === 'Current User' && userDetails
-                    ? userDetails.name
-                    : field.default || '';
+              {actions[0]?.fields?.map((field, index) => (
+                <View key={index} style={{marginBottom: 12}}>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      color: BLACK,
+                      marginBottom: 5,
+                    }}>
+                    {field.label}:
+                  </Text>
 
-                console.log('defaultValue', defaultValue);
-
-                return (
-                  <View key={index} style={{marginBottom: 12}}>
-                    <Text
+                  {/* ✅ Text Field */}
+                  {field.type === 'text' && (
+                    <TextInput
                       style={{
-                        fontSize: 16,
-                        fontWeight: 'bold',
+                        width: '100%',
+                        height: 50,
+                        borderWidth: 1,
+                        borderColor: GRAY,
+                        borderRadius: 8,
+                        padding: 10,
+                        backgroundColor: field.disabled ? '#f5f5f5' : '#fff',
                         color: BLACK,
-                        marginBottom: 5,
+                      }}
+                      placeholder={field.placeholder || 'Enter value'}
+                      placeholderTextColor={GRAY}
+                      value={formData[field.label]} // ✅ Correct initial value now
+                      onChangeText={
+                        text => setFormData({...formData, [field.label]: text}) // ✅ Update formData properly
+                      }
+                      editable={!field.disabled}
+                    />
+                  )}
+
+                  {/* ✅ Date Picker */}
+                  {field.type === 'datetime' && (
+                    <TouchableOpacity
+                      style={{
+                        width: '100%',
+                        height: 50,
+                        borderWidth: 1,
+                        borderColor: '#ccc',
+                        borderRadius: 8,
+                        padding: 12,
+                        justifyContent: 'center',
+                        backgroundColor: field.disabled ? '#f5f5f5' : '#fff',
+                      }}
+                      onPress={() => {
+                        if (!field.disabled) setShowCalendar(true);
                       }}>
-                      {field.label}:
-                    </Text>
-
-                    {/* Render Text Field */}
-                    {field.type === 'text' && (
-                      <TextInput
-                        style={{
-                          width: '100%',
-                          height: 50,
-                          borderWidth: 1,
-                          borderColor: GRAY,
-                          borderRadius: 8,
-                          padding: 10,
-                          backgroundColor: field.disabled ? '#f5f5f5' : '#fff',
-                          color: BLACK,
-                        }}
-                        placeholder={field.placeholder || 'Enter value'}
-                        placeholderTextColor={GRAY}
-                        value={formData[field.label] || defaultValue}
-                        onChangeText={text =>
-                          setFormData({...formData, [field.label]: text})
-                        }
-                        editable={!field.disabled}
-                      />
-                    )}
-
-                    {/* Render Date Picker */}
-                    {field.type === 'datetime' && (
-                      <TouchableOpacity
-                        style={{
-                          width: '100%',
-                          height: 50,
-                          borderWidth: 1,
-                          borderColor: '#ccc',
-                          borderRadius: 8,
-                          padding: 12,
-                          justifyContent: 'center',
-                          backgroundColor: field.disabled ? '#f5f5f5' : '#fff',
-                        }}
-                        onPress={() => {
-                          if (!field.disabled) setShowCalendar(true);
-                        }}>
-                        <Text style={{color: '#000', fontSize: 16}}>
-                          {selectedDate || defaultValue || 'Select Date'}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-
-                    {/* Calendar Modal */}
-                    {showCalendar && field.type === 'datetime' && (
-                      <Modal
-                        transparent={true}
-                        animationType="slide"
-                        onRequestClose={() => setShowCalendar(false)}>
-                        <View
-                          style={{
-                            flex: 1,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                          }}>
-                          <View
-                            style={{
-                              backgroundColor: '#fff',
-                              borderRadius: 12,
-                              padding: 10,
-                              width: '90%',
-                            }}>
-                            <Calendar
-                              onDayPress={day => {
-                                setSelectedDate(day.dateString);
-                                setFormData({
-                                  ...formData,
-                                  [field.label]: day.dateString,
-                                });
-                                setShowCalendar(false);
-                              }}
-                              markedDates={{
-                                [selectedDate]: {
-                                  selected: true,
-                                  marked: true,
-                                  dotColor: '#00adf5',
-                                },
-                              }}
-                              theme={{
-                                selectedDayBackgroundColor: '#00adf5',
-                                todayTextColor: '#00adf5',
-                                arrowColor: '#00adf5',
-                              }}
-                            />
-                            <TouchableOpacity
-                              onPress={() => setShowCalendar(false)}
-                              style={{
-                                marginTop: 10,
-                                padding: 10,
-                                backgroundColor: '#ccc',
-                                borderRadius: 8,
-                                alignItems: 'center',
-                              }}>
-                              <Text style={{color: '#000'}}>
-                                Close Calendar
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      </Modal>
-                    )}
-                  </View>
-                );
-              })}
+                      <Text style={{color: '#000', fontSize: 16}}>
+                        {formData[field.label] || selectedDate || 'Select Date'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
 
               {/* Comment Section */}
               <Text style={{fontWeight: 'bold', color: BLACK}}>Comments:</Text>
