@@ -26,6 +26,7 @@ import {GETNETWORK} from '../../utils/Network';
 import {CheckBox} from 'react-native-elements';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import DateTimePickerComponent from './DateTimePickerComponent';
+import {getObjByKey} from '../../utils/Storage';
 
 const Edit = ({navigation, route}) => {
   const {itemDataArray, id} = route.params || {};
@@ -38,6 +39,8 @@ const Edit = ({navigation, route}) => {
   const [loading, setLoading] = useState(false);
   const [dropdownApiData, setDropdownApiData] = useState({});
   const [selectedDateField, setSelectedDateField] = useState(null);
+  const [token, SetToken] = useState();
+  const [templateId, setTemplateId] = useState();
 
   // Convert array to an editable object
   const initialData = itemDataArray ? Object.fromEntries(itemDataArray) : {};
@@ -93,73 +96,83 @@ const Edit = ({navigation, route}) => {
     }
   };
 
-  const fetchFormData = async () => {
-    const url = `${BASE_URL}forms/formdata/2/1/4/`;
+  // const fetchFormData = async () => {
+  //   const url = `${BASE_URL}forms/formdata/2/1/4/`;
 
-    try {
-      const result = await GETNETWORK(url, true); // Pass `true` to include Authorization header
-      console.log(
-        'Form data fetched successfully:=====================================================',
-        result,
-      );
+  //   try {
+  //     const result = await GETNETWORK(url, true); // Pass `true` to include Authorization header
+  //     console.log(
+  //       'Form data fetched successfully:=====================================================',
+  //       result,
+  //     );
 
-      if (!result) {
-        console.error('Failed to fetch form data');
-      }
-    } catch (error) {
-      console.error('Error fetching form data:', error);
-    }
-  };
+  //     if (!result) {
+  //       console.error('Failed to fetch form data');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching form data:', error);
+  //   }
+  // };
 
-  // ✅ Fetch dropdown options based on master_data_code
-  const fetchDropdownOptions = async masterCode => {
+  const fetchAllDropdownOptions = async fields => {
     setLoading(true);
+
+    const fetchPromises = fields
+      .filter(field => field.master_data_code)
+      .map(async field => {
+        const url = `${BASE_URL}forms/template/${field.master_data_code}/data/`;
+        try {
+          const myHeaders = new Headers();
+          myHeaders.append('Authorization', `Bearer ${token}`);
+          const requestOptions = {
+            method: 'GET',
+            headers: myHeaders,
+            redirect: 'follow',
+          };
+
+          const response = await fetch(url, requestOptions);
+          const result = await response.json();
+
+          if (result?.data?.length > 0 && result.data[0]?.data?.length > 0) {
+            const apiItems = result.data[0].data.map(item => ({
+              label: item.value || item.field_data.label || item.toString(),
+              value: item.value || item.toString(),
+            }));
+            return {masterCode: field.master_data_code, data: apiItems};
+          } else {
+            return {masterCode: field.master_data_code, data: []};
+          }
+        } catch (error) {
+          console.error(
+            `Error fetching dropdown options for ${field.master_data_code}:`,
+            error,
+          );
+          return {masterCode: field.master_data_code, data: []};
+        }
+      });
+
     try {
-      const url = `${BASE_URL}forms/template/${masterCode}/data/`;
-      console.log('Fetching options from:', url);
+      const results = await Promise.all(fetchPromises);
 
-      const response = await fetch(url);
-      const result = await response.json();
+      // ✅ Consolidate dropdown data after all fetches complete
+      const newDropdownData = results.reduce((acc, item) => {
+        acc[item.masterCode] = item.data;
+        return acc;
+      }, {});
 
-      if (result?.data?.length > 0 && result.data[0]?.data?.length > 0) {
-        const apiItems = result.data[0].data.map(item => ({
-          label: item.value || item.field_data.label || item.toString(),
-          value: item.value || item.toString(),
-        }));
-
-        setDropdownApiData(prevData => ({
-          ...prevData,
-          [masterCode]: apiItems,
-        }));
-      } else {
-        console.warn(
-          `No valid data for masterCode ${masterCode}. Using defaults.`,
-        );
-        setDropdownApiData(prevData => ({
-          ...prevData,
-          [masterCode]: [],
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching dropdown options:', error);
-      setDropdownApiData(prevData => ({
-        ...prevData,
-        [masterCode]: [],
-      }));
+      // ✅ Update state with dropdown data
+      setDropdownApiData(newDropdownData);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Get default options if API fails or is empty
-
   // ✅ Fetch API when fields data is loaded
+  // ✅ Fetch dropdown data in parallel when fieldsData is available
   useEffect(() => {
-    fieldsData.forEach(field => {
-      if (field.master_data_code) {
-        fetchDropdownOptions(field.master_data_code);
-      }
-    });
+    if (fieldsData.length > 0) {
+      fetchAllDropdownOptions(fieldsData);
+    }
   }, [fieldsData]);
 
   // ✅ Handle Back Press
@@ -200,6 +213,32 @@ const Edit = ({navigation, route}) => {
         BackHandler.addEventListener('hardwareBackPress', handleBackPress);
       };
     }, [id]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const {id} = route.params;
+
+      const RetriveData = async () => {
+        const storedData = await getObjByKey('loginResponse');
+        // console.log('object storedData', storedData.access);
+        if (storedData) {
+          SetToken(storedData?.access);
+        }
+      };
+      console.log('id: ' + id);
+      GetFields(id);
+      // setFormData(data[0] || {});
+      setError({});
+      setOpenDropdown({});
+      setDropdownValues({});
+      RetriveData();
+
+      return () => {
+        clearFormState();
+        RetriveData();
+      };
+    }, [navigation]),
   );
 
   // ✅ Handle Text & Other Changes
@@ -332,7 +371,6 @@ const Edit = ({navigation, route}) => {
             />
           </View>
         );
-
       case 'image':
         return (
           <>
@@ -435,22 +473,87 @@ const Edit = ({navigation, route}) => {
   //   // ✅ Clear form state after submission
   //   clearFormState();
   // };
+  const handleSubmit = () => {
+    const newErrors = {};
 
-  const handleSubmit = async () => {
-    // ✅ Create an object with field labels as keys and corresponding values
-    const formObject = fieldsData.reduce((acc, field) => {
-      acc[field.id] = formData[field.label] || 'N/A';
-      return acc;
-    }, {});
+    // ✅ Validate mandatory fields
+    fieldsData.forEach(field => {
+      if (field.mandatory && !formData[field.label]?.toString().trim()) {
+        newErrors[field.label] = `${field.label} is required!`;
+      }
+    });
 
-    // ✅ Log the form object to the console
-    console.log(' Form Submitted Successfully:=============', formObject);
+    if (Object.keys(newErrors).length > 0) {
+      setError(newErrors);
+      return;
+    }
 
-    // console.log('🆔 Field IDs:', fieldsData.map(field => field.id).join(', '));
+    // ✅ Prepare the form data in the required format
+    let formDetails = fieldsData.map(field => {
+      let value = formData[field.label] || 'N/A'; // Use form data or 'N/A' if not present
 
-    clearFormState();
+      // If the value is boolean, convert it to a string
+      if (typeof value === 'boolean') {
+        value = value.toString();
+      }
+
+      return {
+        value: value, // The value to be sent
+        field: field.id, // The field ID
+      };
+    });
+
+    // Create the payload with 'data' and 'template'
+    const payload = {
+      data: formDetails, // The field data array
+      template: templateId || 'N/A', // Include templateId, fallback to 'N/A' if not available
+    };
+
+    console.log('Payload:', payload); // Log the payload to the console
+
+    // Set up headers for the API request
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+    myHeaders.append('Authorization', `Bearer ${token}`);
+
+    // Define the raw payload (this can be dynamically updated with your data)
+    const raw = JSON.stringify(payload);
+
+    // Define the request options
+    const requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow',
+    };
+
+    setLoading(true);
+
+    // Make the API call with fetch
+    fetch(`${BASE_URL}forms/data/`, requestOptions)
+      .then(response => response.json()) // Handle JSON response
+      .then(result => {
+        console.log('API Response:', result); // Log the result
+        setLoading(false);
+
+        // Check if the response indicates success
+        if (result && result.id) {
+          // Handle successful submission here (no alert)
+          console.log('Form submitted successfully!', result);
+          setLoading(false);
+          navigation.navigate('Forms'); // Navigate to Forms page
+          clearFormState(); // Clear the form
+        } else {
+          // Handle failure if needed
+          console.error('Submission Failed:', result);
+          setLoading(false);
+        }
+      })
+      .catch(error => {
+        console.error('Error during API call:', error); // Handle any errors
+        setLoading(false);
+      });
   };
-
   return (
     <Fragment>
       <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
@@ -491,10 +594,9 @@ const Edit = ({navigation, route}) => {
         <TouchableOpacity
           onPress={() => {
             handleSubmit();
-            fetchFormData();
           }}
           style={styles.submitButton}>
-          <Text style={styles.submitText}>Submit</Text>
+          <Text style={styles.submitText}>Update</Text>
         </TouchableOpacity>
       </SafeAreaView>
       <Loader visible={false} />

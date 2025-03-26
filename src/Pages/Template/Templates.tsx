@@ -55,6 +55,7 @@ const Templates = ({navigation, route}) => {
   const [selectedRowData, setSelectedRowData] = useState({});
   const [token, SetToken] = useState();
   const [refreshing, setRefreshing] = useState(false);
+  const [formData, setFormData] = useState({});
 
   const [filteredData, setFilteredData] = useState(templateData);
   const [TemplateID, SetTemplateId] = useState('');
@@ -162,6 +163,8 @@ const Templates = ({navigation, route}) => {
     try {
       const url = `${BASE_URL}forms/custumlink/${id}/data/`;
       const response = await GETNETWORK(url, true);
+
+      console.log('object', response);
 
       if (response?.results?.length > 0) {
         setTemplateData(response.results);
@@ -757,175 +760,160 @@ const Templates = ({navigation, route}) => {
             }}>
             <ScrollView
               style={{
-                maxHeight: 300,
+                maxHeight: 400,
                 marginBottom: 15,
                 backgroundColor: '#f9f9f9',
                 padding: 10,
                 borderRadius: 8,
               }}>
-              {/* Training Allotment By */}
-              <Text style={{fontSize: 16, fontWeight: 'bold', color: BLACK}}>
-                Training Allotment By:
-              </Text>
+              {/* Loop through State_Action.fields */}
+              {actions[0]?.fields?.map((field, index) => {
+                // Check if default is "Current User"
+                const defaultValue =
+                  field.default === 'Current User' && userDetails
+                    ? userDetails.name
+                    : field.default || '';
+
+                return (
+                  <View key={index} style={{marginBottom: 12}}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        color: BLACK,
+                        marginBottom: 5,
+                      }}>
+                      {field.label}:
+                    </Text>
+
+                    {/* Render Text Field */}
+                    {field.type === 'text' && (
+                      <TextInput
+                        style={{
+                          width: '100%',
+                          height: 50,
+                          borderWidth: 1,
+                          borderColor: GRAY,
+                          borderRadius: 8,
+                          padding: 10,
+                          backgroundColor: field.disabled ? '#f5f5f5' : '#fff',
+                          color: BLACK,
+                        }}
+                        placeholder={field.placeholder || 'Enter value'}
+                        placeholderTextColor={GRAY}
+                        value={formData[field.label] || defaultValue}
+                        onChangeText={text =>
+                          setFormData({...formData, [field.label]: text})
+                        }
+                        editable={!field.disabled}
+                      />
+                    )}
+
+                    {/* Render Date Picker */}
+                    {field.type === 'datetime' && (
+                      <TouchableOpacity
+                        style={{
+                          width: '100%',
+                          height: 50,
+                          borderWidth: 1,
+                          borderColor: '#ccc',
+                          borderRadius: 8,
+                          padding: 12,
+                          justifyContent: 'center',
+                          backgroundColor: field.disabled ? '#f5f5f5' : '#fff',
+                        }}
+                        onPress={() => {
+                          if (!field.disabled) setShowCalendar(true);
+                        }}>
+                        <Text style={{color: '#000', fontSize: 16}}>
+                          {selectedDate || defaultValue || 'Select Date'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {/* Calendar Modal */}
+                    {showCalendar && field.type === 'datetime' && (
+                      <Modal
+                        transparent={true}
+                        animationType="slide"
+                        onRequestClose={() => setShowCalendar(false)}>
+                        <View
+                          style={{
+                            flex: 1,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                          }}>
+                          <View
+                            style={{
+                              backgroundColor: '#fff',
+                              borderRadius: 12,
+                              padding: 10,
+                              width: '90%',
+                            }}>
+                            <Calendar
+                              onDayPress={day => {
+                                setSelectedDate(day.dateString);
+                                setFormData({
+                                  ...formData,
+                                  [field.label]: day.dateString,
+                                });
+                                setShowCalendar(false);
+                              }}
+                              markedDates={{
+                                [selectedDate]: {
+                                  selected: true,
+                                  marked: true,
+                                  dotColor: '#00adf5',
+                                },
+                              }}
+                              theme={{
+                                selectedDayBackgroundColor: '#00adf5',
+                                todayTextColor: '#00adf5',
+                                arrowColor: '#00adf5',
+                              }}
+                            />
+                            <TouchableOpacity
+                              onPress={() => setShowCalendar(false)}
+                              style={{
+                                marginTop: 10,
+                                padding: 10,
+                                backgroundColor: '#ccc',
+                                borderRadius: 8,
+                                alignItems: 'center',
+                              }}>
+                              <Text style={{color: '#000'}}>
+                                Close Calendar
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </Modal>
+                    )}
+                  </View>
+                );
+              })}
+
+              {/* Comment Section */}
+              <Text style={{fontWeight: 'bold', color: BLACK}}>Comments:</Text>
               <TextInput
                 style={{
                   width: '100%',
-                  height: 50,
+                  height: 100,
                   borderWidth: 1,
                   borderColor: GRAY,
                   borderRadius: 8,
                   padding: 10,
-                  backgroundColor: '#f5f5f5', // Light gray for a disabled look
+                  textAlignVertical: 'top',
                   color: BLACK,
                 }}
-                placeholder="User Name"
-                value={userDetails?.name || 'N/A'}
-                editable={false} // Disable editing
+                multiline={true}
                 placeholderTextColor={GRAY}
+                placeholder="Add your comment here"
+                value={comment}
+                onChangeText={text => setComment(text)}
               />
-
-              {/* Date Section */}
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: 'bold',
-                  color: BLACK,
-                  marginTop: 15,
-                }}>
-                Date:
-              </Text>
-              {/* <Text style={{color: BLACK, fontSize: 18, marginTop: 5}}>
-                {new Date().toISOString().split('T')[0]}
-              </Text> */}
-              <TouchableOpacity
-                style={{
-                  width: '100%',
-                  height: 50,
-                  borderWidth: 1,
-                  borderColor: '#ccc',
-                  borderRadius: 8,
-                  padding: 12,
-                  justifyContent: 'center',
-                  backgroundColor: '#f5f5f5',
-                }}
-                onPress={() => setShowCalendar(true)}>
-                <Text style={{color: '#000', fontSize: 16}}>
-                  {selectedDate || 'Select Date'}
-                </Text>
-              </TouchableOpacity>
-
-              {/* Show Calendar in Modal */}
-              {showCalendar && (
-                <Modal
-                  transparent={true}
-                  animationType="slide"
-                  onRequestClose={() => setShowCalendar(false)}>
-                  <View
-                    style={{
-                      flex: 1,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    }}>
-                    <View
-                      style={{
-                        backgroundColor: '#fff',
-                        borderRadius: 12,
-                        padding: 10,
-                        width: '90%',
-                      }}>
-                      <Calendar
-                        onDayPress={day => {
-                          setSelectedDate(day.dateString);
-                          setShowCalendar(false);
-                        }}
-                        markedDates={{
-                          [selectedDate]: {
-                            selected: true,
-                            marked: true,
-                            dotColor: '#00adf5',
-                          },
-                        }}
-                        theme={{
-                          selectedDayBackgroundColor: '#00adf5',
-                          todayTextColor: '#00adf5',
-                          arrowColor: '#00adf5',
-                        }}
-                      />
-                      <TouchableOpacity
-                        onPress={() => setShowCalendar(false)}
-                        style={{
-                          marginTop: 10,
-                          padding: 10,
-                          backgroundColor: '#ccc',
-                          borderRadius: 8,
-                          alignItems: 'center',
-                        }}>
-                        <Text style={{color: '#000'}}>Close Calendar</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </Modal>
-              )}
-
-              {/* Time Section */}
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: 'bold',
-                  color: BLACK,
-                  marginTop: 15,
-                }}>
-                Time:
-              </Text>
-              <TouchableOpacity
-                style={{
-                  width: '100%',
-                  height: 50,
-                  borderWidth: 1,
-                  borderColor: '#ccc',
-                  borderRadius: 8,
-                  padding: 12,
-                  justifyContent: 'center',
-                  backgroundColor: '#f5f5f5',
-                }}
-                onPress={() => setShowTimePicker(true)}>
-                <Text style={{color: '#000', fontSize: 16}}>
-                  {selectedTime || 'Select Time'}
-                </Text>
-              </TouchableOpacity>
-
-              {/* Show Time Picker */}
-              {showTimePicker && (
-                <DateTimePicker
-                  value={new Date()}
-                  mode="time"
-                  is24Hour={false}
-                  display="default"
-                  onChange={onTimeChange}
-                />
-              )}
             </ScrollView>
-
-            {/* Comment Section */}
-            <Text style={{fontWeight: 'bold', color: BLACK}}>Comments:</Text>
-            <TextInput
-              style={{
-                width: '100%',
-                height: 100,
-                borderWidth: 1,
-                borderColor: GRAY,
-                borderRadius: 8,
-                padding: 10,
-                textAlignVertical: 'top',
-                color: BLACK,
-              }}
-              multiline={true}
-              placeholderTextColor={GRAY}
-              placeholder="Add your comment here"
-              value={comment}
-              onChangeText={text => setComment(text)}
-            />
 
             {/* Modal Buttons */}
             <View
@@ -966,6 +954,7 @@ const Templates = ({navigation, route}) => {
           </View>
         </View>
       </Modal>
+
       <Loader visible={loading} />
     </Fragment>
   );

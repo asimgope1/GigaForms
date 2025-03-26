@@ -65,7 +65,7 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
   }, []);
 
   const getProfileData = async () => {
-    setLoading(true);
+    // setLoading(true);
     try {
       const url = `${BASE_URL}user/profile/`;
       const response = await GETNETWORK(url, true);
@@ -76,7 +76,7 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
       console.error('Error fetching profile data:', error);
       alert('Failed to load profile data.');
     }
-    setLoading(false);
+    // setLoading(false);
   };
 
   const GetOptions = async () => {
