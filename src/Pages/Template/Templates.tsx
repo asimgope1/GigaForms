@@ -222,8 +222,6 @@ const Templates = ({navigation, route}) => {
       }),
     );
 
-    console.log('Mapped Data:', mappedData);
-
     // ✅ Extract all_form_id dynamically
     const allFormIds = selectedFieldData?.fields
       ?.map(item => item?.all_form_id)
@@ -234,7 +232,7 @@ const Templates = ({navigation, route}) => {
 
     // ✅ Prepare request body
     let requestBody = {
-      data: {},
+      data: [],
       template: TemplateID,
       is_delete: false,
       lock_status: 'N',
@@ -947,7 +945,9 @@ const Templates = ({navigation, route}) => {
                   borderRadius: 8,
                   alignItems: 'center',
                 }}
-                onPress={updateForm}>
+                onPress={() => {
+                  updateForm();
+                }}>
                 <Text style={{color: '#fff', fontWeight: 'bold'}}>Submit</Text>
               </TouchableOpacity>
             </View>

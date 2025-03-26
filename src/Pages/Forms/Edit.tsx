@@ -218,6 +218,7 @@ const Edit = ({navigation, route}) => {
   useFocusEffect(
     useCallback(() => {
       const {id} = route.params;
+      setTemplateId(id);
 
       const RetriveData = async () => {
         const storedData = await getObjByKey('loginResponse');
@@ -507,6 +508,8 @@ const Edit = ({navigation, route}) => {
     const payload = {
       data: formDetails, // The field data array
       template: templateId || 'N/A', // Include templateId, fallback to 'N/A' if not available
+      is_delete: false,
+      lock_status: 'N',
     };
 
     console.log('Payload:', payload); // Log the payload to the console
@@ -521,7 +524,7 @@ const Edit = ({navigation, route}) => {
 
     // Define the request options
     const requestOptions = {
-      method: 'POST',
+      method: 'PUT',
       headers: myHeaders,
       body: raw,
       redirect: 'follow',
@@ -530,30 +533,58 @@ const Edit = ({navigation, route}) => {
     setLoading(true);
 
     // Make the API call with fetch
-    fetch(`${BASE_URL}forms/data/`, requestOptions)
-      .then(response => response.json()) // Handle JSON response
-      .then(result => {
-        console.log('API Response:', result); // Log the result
-        setLoading(false);
+    fetch(`${BASE_URL}forms/data/${templateId}/`, requestOptions)
+      .then(async response => {
+        const result = await response.json(); // Parse JSON response
 
-        // Check if the response indicates success
-        if (result && result.id) {
-          // Handle successful submission here (no alert)
+        // ✅ Handle 400 Bad Request explicitly with custom locked error
+        if (response.status === 400) {
+          if (result?.detail === 'This Data is locked, unlock to delete') {
+            console.error('Locked Data:', result);
+            Alert.alert(
+              'Error',
+              'This Data is locked. Please unlock to proceed.',
+            );
+            // navigation.navigate('Forms'); // Navigate to Forms page
+          } else {
+            console.error('Bad Request:', result);
+            Alert.alert(
+              'Error',
+              result?.detail || 'Invalid data. Please check your input!',
+            );
+          }
+          setLoading(false);
+          return;
+        }
+
+        // ✅ Handle successful submission
+        if (response.ok && result.id) {
           console.log('Form submitted successfully!', result);
           setLoading(false);
+          Alert.alert('Success', 'Form submitted successfully! 🎉');
           navigation.navigate('Forms'); // Navigate to Forms page
-          clearFormState(); // Clear the form
+          clearFormState(); // Clear form after success
         } else {
-          // Handle failure if needed
+          // ✅ Handle other unexpected errors
           console.error('Submission Failed:', result);
+          Alert.alert(
+            'Error',
+            result?.detail || 'Something went wrong. Try again later.',
+          );
           setLoading(false);
         }
       })
       .catch(error => {
-        console.error('Error during API call:', error); // Handle any errors
+        console.error('API Call Error:', error);
+        Alert.alert(
+          'Error',
+          'Network Error! Please check your internet connection.',
+        );
         setLoading(false);
       });
   };
+
+  console.log('formData', formData);
   return (
     <Fragment>
       <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
