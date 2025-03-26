@@ -145,64 +145,66 @@ const FormsTemplates = ({navigation, route}) => {
 
   // ✅ Fetch dropdown options based on master_data_code
   // ✅ Fetch dropdown options without default fallback
-  const fetchDropdownOptions = async masterCode => {
+  // ✅ Fetch all dropdown data in parallel and update the state
+  const fetchAllDropdownOptions = async fields => {
     setLoading(true);
+
+    const fetchPromises = fields
+      .filter(field => field.master_data_code)
+      .map(async field => {
+        const url = `${BASE_URL}forms/template/${field.master_data_code}/data/`;
+        try {
+          const myHeaders = new Headers();
+          myHeaders.append('Authorization', `Bearer ${token}`);
+          const requestOptions = {
+            method: 'GET',
+            headers: myHeaders,
+            redirect: 'follow',
+          };
+
+          const response = await fetch(url, requestOptions);
+          const result = await response.json();
+
+          if (result?.data?.length > 0 && result.data[0]?.data?.length > 0) {
+            const apiItems = result.data[0].data.map(item => ({
+              label: item.value || item.field_data.label || item.toString(),
+              value: item.value || item.toString(),
+            }));
+            return {masterCode: field.master_data_code, data: apiItems};
+          } else {
+            return {masterCode: field.master_data_code, data: []};
+          }
+        } catch (error) {
+          console.error(
+            `Error fetching dropdown options for ${field.master_data_code}:`,
+            error,
+          );
+          return {masterCode: field.master_data_code, data: []};
+        }
+      });
+
     try {
-      const myHeaders = new Headers();
-      myHeaders.append('Authorization', `Bearer ${token}`);
+      const results = await Promise.all(fetchPromises);
 
-      const requestOptions = {
-        method: 'GET',
-        headers: myHeaders,
-        redirect: 'follow',
-      };
+      // ✅ Consolidate dropdown data after all fetches complete
+      const newDropdownData = results.reduce((acc, item) => {
+        acc[item.masterCode] = item.data;
+        return acc;
+      }, {});
 
-      const url = `${BASE_URL}forms/template/${masterCode}/data/`;
-      console.log('Fetching options from:', url);
-
-      const response = await fetch(url, requestOptions);
-      const result = await response.json();
-
-      if (result?.data?.length > 0 && result.data[0]?.data?.length > 0) {
-        const apiItems = result.data[0].data.map(item => ({
-          label: item.value || item.field_data.label || item.toString(),
-          value: item.value || item.toString(),
-        }));
-
-        // ✅ Update dropdown API data for the specific field
-        setDropdownApiData(prevData => ({
-          ...prevData,
-          [masterCode]: apiItems,
-        }));
-      } else {
-        console.warn(
-          `No valid options available for masterCode: ${masterCode}`,
-        );
-        // ✅ Set an empty array if no valid data is found
-        setDropdownApiData(prevData => ({
-          ...prevData,
-          [masterCode]: [],
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching dropdown options:', error);
-      // ✅ Set an empty array in case of error
-      setDropdownApiData(prevData => ({
-        ...prevData,
-        [masterCode]: [],
-      }));
+      // ✅ Update state with dropdown data
+      setDropdownApiData(newDropdownData);
     } finally {
       setLoading(false);
     }
   };
 
   // ✅ Fetch API when fields data is loaded
+  // ✅ Fetch dropdown data in parallel when fieldsData is available
   useEffect(() => {
-    fieldsData.forEach(field => {
-      if (field.master_data_code) {
-        fetchDropdownOptions(field.master_data_code);
-      }
-    });
+    if (fieldsData.length > 0) {
+      fetchAllDropdownOptions(fieldsData);
+    }
   }, [fieldsData]);
 
   const renderField = (field, index) => {
