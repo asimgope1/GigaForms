@@ -1,5 +1,5 @@
-export const LOGO = require('../assets/images/dazzle.png');
-export const LOGOZZ = require('../assets/images/dazzle.png');
+export const LOGO = require('../assets/images/logo.jpg');
+export const LOGOZZ = require('../assets/images/logo.jpg');
 export const ZZWHITE = require('../assets/images/zzwhite.png');
 export const BACKARROW = require('../assets/images/backarrow.png');
 export const CLAIM = require('../assets/images/claim.png');
