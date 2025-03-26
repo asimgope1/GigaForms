@@ -247,12 +247,12 @@ const Templates = ({navigation, route}) => {
     // ✅ Get matched field IDs (from state)
     console.log(
       'Matched Field IDs for update:55555555555555555555555555555555555',
-      matchedFieldIds,
+      matchedFieldData,
     );
 
     // ✅ Prepare request body
     let requestBody = {
-      data: matchedFieldIds, // ✅ Add matched IDs to request body
+      data: matchedFieldData, // ✅ Add matched IDs to request body
       template: TemplateID,
       is_delete: false,
       lock_status: 'N',
