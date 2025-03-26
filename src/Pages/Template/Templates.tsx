@@ -58,6 +58,10 @@ const Templates = ({navigation, route}) => {
   const [formData, setFormData] = useState({});
 
   const [filteredData, setFilteredData] = useState(templateData);
+  const [filterField, setFilterField] = useState([]); // Store filter field from GetTemplateData
+  const [fieldLabels, setFieldLabels] = useState([]); // Store field labels from handleActionPress
+  const [matchedFieldData, setMatchedFieldData] = useState([]); // ✅ Store matched data
+
   const [TemplateID, SetTemplateId] = useState('');
 
   const [selectedDate, setSelectedDate] = useState(
@@ -159,12 +163,22 @@ const Templates = ({navigation, route}) => {
     setLoading(true);
     console.log('id', id);
     resetSelectedItems();
-    // if (!id) return;
+
     try {
       const url = `${BASE_URL}forms/custumlink/${id}/data/`;
       const response = await GETNETWORK(url, true);
 
       console.log('object', response);
+      if (response?.filter_field) {
+        setFilterField(response.filter_field); // ✅ Save to state
+        console.log(
+          'Filter Field:**************************************',
+          response.filter_field,
+        );
+      } else {
+        setFilterField([]); // ✅ Reset if no filter_field found
+        console.log('No filter_field found in response.');
+      }
 
       if (response?.results?.length > 0) {
         setTemplateData(response.results);
@@ -230,9 +244,15 @@ const Templates = ({navigation, route}) => {
     console.log('All Form IDs:', allFormIds);
     console.log('sTemplateID', TemplateID);
 
+    // ✅ Get matched field IDs (from state)
+    console.log(
+      'Matched Field IDs for update:55555555555555555555555555555555555',
+      matchedFieldIds,
+    );
+
     // ✅ Prepare request body
     let requestBody = {
-      data: [],
+      data: matchedFieldIds, // ✅ Add matched IDs to request body
       template: TemplateID,
       is_delete: false,
       lock_status: 'N',
@@ -263,15 +283,12 @@ const Templates = ({navigation, route}) => {
     // ✅ API call to update form
     fetch(`${BASE_URL}forms/data/bulkupdate`, requestOptions)
       .then(async response => {
-        const result = await response.json(); // Parse JSON response correctly
+        const result = await response.json();
         console.log('updated successfully----called', result);
         handelUpdateComment(comment, allFormIds, actions[0].id);
 
         // ✅ Close the modal after successful update
         closeModal();
-
-        // ✅ Handle further actions if required
-        // this.updateComment(result); // Optional if needed
       })
       .catch(err => {
         console.error('Error updating form:', err);
@@ -314,16 +331,47 @@ const Templates = ({navigation, route}) => {
       })
       .catch(error => console.error(error));
   };
-
   const handleActionPress = action => {
     const selectedItems = Object.values(checkedItems);
+
     if (selectedItems.length > 0) {
       setSelectedFieldData({fields: selectedItems});
       setIsModalVisible(true);
+
+      // ✅ Save field labels in state
+      if (action?.fields?.length > 0) {
+        const labels = action.fields.map(field => field.label);
+        setFieldLabels(labels);
+        console.log('Field Labels Saved:', labels);
+
+        // ✅ Match field labels with filterField and extract matched IDs
+        const matchedData = action.fields
+          .filter(field =>
+            filterField?.some(item => item.label === field.label),
+          )
+          .map(field => {
+            const matchedField = filterField.find(
+              item => item.label === field.label,
+            );
+            return {
+              id: matchedField?.id || '', // ✅ Matched field ID
+              label: field.label, // ✅ Label
+              value: field.value || '', // ✅ Value (use field.value or empty if not found)
+            };
+          });
+
+        setMatchedFieldData(matchedData); // ✅ Save matched data in state
+        console.log('Matched Field Data for Modal: 🚀🚀🚀', matchedData);
+      } else {
+        setFieldLabels([]);
+        setMatchedFieldData([]);
+        console.log('No fields found in State_Action.');
+      }
     } else {
       alert('Please select an item to proceed.');
     }
   };
+
   const onTimeChange = (event, selected) => {
     setShowTimePicker(Platform.OS === 'ios'); // Show only for iOS
     if (selected) {
@@ -771,6 +819,8 @@ const Templates = ({navigation, route}) => {
                   field.default === 'Current User' && userDetails
                     ? userDetails.name
                     : field.default || '';
+
+                console.log('defaultValue', defaultValue);
 
                 return (
                   <View key={index} style={{marginBottom: 12}}>
