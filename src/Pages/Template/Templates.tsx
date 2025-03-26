@@ -821,6 +821,7 @@ const Templates = ({navigation, route}) => {
                   field.default === 'Current User' && userDetails
                     ? userDetails.name
                     : field.default || '';
+
                 console.log('defaultValue', defaultValue);
 
                 return (
