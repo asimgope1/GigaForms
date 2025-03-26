@@ -115,7 +115,7 @@ const Edit = ({navigation, route}) => {
   const fetchDropdownOptions = async masterCode => {
     setLoading(true);
     try {
-      const url = `https://api.tatapowergatepass.epsumlabs.in/forms/template/${masterCode}/data/`;
+      const url = `${BASE_URL}forms/template/${masterCode}/data/`;
       console.log('Fetching options from:', url);
 
       const response = await fetch(url);
@@ -137,14 +137,14 @@ const Edit = ({navigation, route}) => {
         );
         setDropdownApiData(prevData => ({
           ...prevData,
-          [masterCode]: getDefaultOptions(),
+          [masterCode]: [],
         }));
       }
     } catch (error) {
       console.error('Error fetching dropdown options:', error);
       setDropdownApiData(prevData => ({
         ...prevData,
-        [masterCode]: getDefaultOptions(),
+        [masterCode]: [],
       }));
     } finally {
       setLoading(false);
@@ -152,11 +152,6 @@ const Edit = ({navigation, route}) => {
   };
 
   // ✅ Get default options if API fails or is empty
-  const getDefaultOptions = () => [
-    {label: '1', value: '1'},
-    {label: '2', value: '2'},
-    {label: '3', value: '3'},
-  ];
 
   // ✅ Fetch API when fields data is loaded
   useEffect(() => {
@@ -272,23 +267,70 @@ const Edit = ({navigation, route}) => {
         );
 
       case 'dropdown':
-        const dropdownItems =
-          dropdownApiData[field.master_data_code] || getDefaultOptions();
+        let dropdownItems = [];
+        if (loading) {
+          return (
+            <View
+              style={{
+                marginBottom: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Loader visible={true} />
+            </View>
+          );
+        }
+
+        // Convert comma-separated string to array if necessary
+        if (typeof field.values === 'string' && field.values.trim() !== '') {
+          dropdownItems = field.values.split(',').map(item => ({
+            label: item.trim(),
+            value: item.trim(),
+          }));
+        } else if (
+          (!field.values || field.values.length === 0) &&
+          field.master_data_code &&
+          dropdownApiData[field.master_data_code]
+        ) {
+          dropdownItems = dropdownApiData[field.master_data_code].map(item => ({
+            label: item.label || item.value || item.toString(),
+            value: item.value || item.toString(),
+          }));
+        }
+
+        // If no valid dropdown items, show error or fallback
+        if (dropdownItems.length === 0) {
+          console.log(field.master_data_code, 'master_data_code');
+          return (
+            <Text style={{color: 'red', marginBottom: 10}}>
+              No options available for {field.label}
+            </Text>
+          );
+        }
 
         return (
-          <DropDownPicker
-            open={openDropdown[field.id] || false}
-            value={formData[field.label] || null}
-            items={dropdownItems}
-            setOpen={open => {
-              setOpenDropdown(prev => ({...prev, [field.id]: open}));
-            }}
-            setValue={callback => {
-              const value = callback(formData[field.label]);
-              handleChange(field.label, value);
-            }}
-            placeholder={field.placeholder || `Select ${field.label}`}
-          />
+          <View
+            style={{
+              zIndex: openDropdown[field.id] ? 1000 - index : 1,
+              elevation: openDropdown[field.id] ? 10 : 1,
+            }}>
+            <DropDownPicker
+              open={openDropdown[field.id] || false}
+              value={formData[field.label] || null}
+              items={dropdownItems}
+              setOpen={open => {
+                setOpenDropdown(prev => ({...prev, [field.id]: open}));
+              }}
+              setValue={callback => {
+                const value = callback(formData[field.label]);
+                handleChange(field.label, value);
+              }}
+              placeholder={field.placeholder || `Select ${field.label}`}
+              containerStyle={[styles.dropdownContainer]}
+              style={styles.dropdown}
+              modalProps={{animationType: 'fade'}} // Fix for iOS
+            />
+          </View>
         );
 
       case 'image':
@@ -595,5 +637,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  dropdownContainer: {
+    height: 50,
+    zIndex: 10,
+  },
+  dropdown: {
+    backgroundColor: '#fff',
+    borderColor: '#ccc',
   },
 });
