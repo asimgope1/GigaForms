@@ -463,7 +463,7 @@ const Templates = ({navigation, route}) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
       <SafeAreaView style={splashStyles.maincontainer}>
         <TitleHeader
           title="Template Data View"

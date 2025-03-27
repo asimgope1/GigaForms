@@ -8,3 +8,4 @@ export const TICK = require('../assets/images/tick.png');
 export const CHECKMARK = require('../assets/images/check-mark.png');
 export const IBTN = require('../assets/images/ibtn.png');
 export const DELETE = require('../assets/images/delete.png');
+export const GIGAFORMLOGO = require('../assets/images/dazzle.png');

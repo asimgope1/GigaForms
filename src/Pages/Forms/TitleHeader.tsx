@@ -1,7 +1,7 @@
 import {View, Text, Pressable, StyleSheet, Platform} from 'react-native';
 import React from 'react';
 import {Icon} from 'react-native-paper';
-import {BRAND, DARKGREEN, WHITE} from '../../constants/color';
+import {BRAND, DARKGREEN, GREEN, WHITE} from '../../constants/color';
 import {HEIGHT} from '../../constants/config';
 import {BOLD} from '../../constants/fontfamily';
 import {RFPercentage} from 'react-native-responsive-fontsize';
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: BRAND,
+    backgroundColor: DARKGREEN,
     height: HEIGHT * 0.08,
     // paddingHorizontal: 15,
     position: 'relative', // To allow the title to be absolutely positioned.

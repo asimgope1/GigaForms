@@ -264,7 +264,7 @@ const CreateUser = ({navigation}: CreateUserProps) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
       <SafeAreaView style={styles.mainContainer}>
         <TitleHeader
           title="Create-User"

@@ -124,7 +124,7 @@ const FormsDataView = ({navigation, route}) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
       <SafeAreaView style={[splashStyles.maincontainer]}>
         {/* Back and Page Header */}
         <TitleHeader
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -20,
     right: 0,
-    backgroundColor: BRANDBLUE,
+    backgroundColor: DARKGREEN,
     padding: 8,
     borderRadius: 5,
   },
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   viewMoreText: {
     marginTop: 10,
     fontSize: 14,
-    color: BRANDBLUE,
+    color: DARKGREEN,
     textAlign: 'right',
   },
 });

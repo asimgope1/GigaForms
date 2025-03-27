@@ -126,7 +126,7 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
           <TouchableOpacity
             style={styles.drawerItem}
             onPress={() => navigation.navigate('Home')}>
-            <Icon source="home-outline" size={24} color={BRAND} />
+            <Icon source="home-outline" size={24} color={GREEN} />
             <Text style={styles.drawerItemText}>Home</Text>
           </TouchableOpacity>
 
@@ -136,7 +136,7 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
             onPress={() =>
               setShowRegistrationSubItems(!showRegistrationSubItems)
             }>
-            <Icon source="account-plus-outline" size={24} color={BRAND} />
+            <Icon source="account-plus-outline" size={24} color={GREEN} />
             <Text style={styles.drawerItemText}>Registration</Text>
           </TouchableOpacity>
 
@@ -153,7 +153,7 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
                   <Icon
                     source="card-account-details-outline"
                     size={24}
-                    color={BRAND}
+                    color={GREEN}
                   />
                   <Text style={styles.drawerItemText}>{option.label}</Text>
                 </TouchableOpacity>
@@ -165,7 +165,7 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
           <TouchableOpacity
             style={styles.drawerItem}
             onPress={() => setShowApprovalSubItems(!showApprovalSubItems)}>
-            <Icon source="sticker-check-outline" size={24} color={BRAND} />
+            <Icon source="sticker-check-outline" size={24} color={GREEN} />
             <Text style={styles.drawerItemText}>Approval</Text>
           </TouchableOpacity>
 
@@ -177,7 +177,7 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
                   onPress={() =>
                     navigation.navigate('Templates', {tamplateId: option})
                   }>
-                  <Icon source="folder-check-outline" size={24} color={BRAND} />
+                  <Icon source="folder-check-outline" size={24} color={GREEN} />
                   <Text style={styles.drawerItemText}>
                     {option?.template_name}
                   </Text>
@@ -190,13 +190,13 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
           <TouchableOpacity
             style={styles.drawerItem}
             onPress={() => navigation.navigate('Profile')}>
-            <Icon source="account-outline" size={24} color={BRAND} />
+            <Icon source="account-outline" size={24} color={GREEN} />
             <Text style={styles.drawerItemText}>Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.drawerItem}
             onPress={() => navigation.navigate('FormsTest')}>
-            <Icon source="account-outline" size={24} color={BRAND} />
+            <Icon source="account-outline" size={24} color={GREEN} />
             <Text style={styles.drawerItemText}>FormsTest</Text>
           </TouchableOpacity>
 
@@ -205,7 +205,7 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
             <TouchableOpacity
               style={styles.drawerItem}
               onPress={() => navigation.navigate('Create-User')}>
-              <Icon source="account-plus" size={24} color={BRAND} />
+              <Icon source="account-plus" size={24} color={GREEN} />
               <Text style={styles.drawerItemText}>Create User</Text>
             </TouchableOpacity>
           )}
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     marginBottom: 10,
     borderWidth: 2,
-    borderColor: BRAND,
+    borderColor: GREEN,
   },
   profileName: {
     fontSize: 18,

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import {TextInput, Button, Text} from 'react-native-paper';
 import Toast from 'react-native-toast-message';
-import {LOGOZZ} from '../../constants/imagepath';
+import {GIGAFORMLOGO, LOGOZZ} from '../../constants/imagepath';
 import {GREEN, WHITE, BLACK, DARKGREEN, BRAND} from '../../constants/color';
 import {MyStatusBar, WIDTH} from '../../constants/config';
 import {POSTNETWORK} from '../../utils/Network';
@@ -28,7 +28,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   // Animated Logo & Form
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const scaleAnim = useRef(new Animated.Value(0.5)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
@@ -103,7 +103,7 @@ const Login = () => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={BRAND} barStyle="dark-content" />
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle="dark-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flexContainer}>
@@ -115,7 +115,7 @@ const Login = () => {
             <Animated.View style={[styles.loginBox, {opacity: fadeAnim}]}>
               {/* Animated Logo */}
               <Animated.Image
-                source={LOGOZZ}
+                source={GIGAFORMLOGO}
                 style={[styles.logo, {transform: [{scale: scaleAnim}]}]}
               />
 
@@ -200,9 +200,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 200,
-    height: 100,
+    width: 250,
+    height: 70,
     marginBottom: 20,
+    resizeMode: 'cover',
   },
   input: {
     width: '100%',

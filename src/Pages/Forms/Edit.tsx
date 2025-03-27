@@ -587,7 +587,7 @@ const Edit = ({navigation, route}) => {
   console.log('formData', formData);
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
       <SafeAreaView style={splashStyles.maincontainer}>
         <TitleHeader
           title="Edit Page"
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   smallButton: {
-    backgroundColor: BRAND,
+    backgroundColor: DARKGREEN,
     padding: 10,
     borderRadius: 8,
     flex: 0.48,

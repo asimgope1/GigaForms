@@ -474,7 +474,7 @@ const FormsTemplates = ({navigation, route}) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{flex: 1}}>

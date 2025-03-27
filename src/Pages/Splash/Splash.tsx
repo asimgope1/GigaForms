@@ -2,7 +2,7 @@ import React, {Fragment, useEffect, useState} from 'react';
 import {View, Image, SafeAreaView, Animated} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {BRAND, GREEN, WHITE} from '../../constants/color';
-import {LOGO, LOGOZZ} from '../../constants/imagepath';
+import {GIGAFORMLOGO, LOGO, LOGOZZ} from '../../constants/imagepath';
 import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {splashStyles} from './SplashStyles';
 
@@ -58,13 +58,13 @@ const Splash: React.FC<SplashProps> = ({navigation}) => {
               transform: [{scale: scaleAnim}], // Apply scaling transform
             }}>
             <Image
-              resizeMode="contain"
+              resizeMode="cover"
               style={{
                 alignSelf: 'center',
-                width: '150%', // Set to full width of container
-                height: '150%', // Set to full height of container
+                width: '100%', // Set to full width of container
+                height: '100%', // Set to full height of container
               }}
-              source={LOGOZZ} // Assuming LOGOZZ is the brand logo
+              source={GIGAFORMLOGO} // Assuming LOGOZZ is the brand logo
             />
           </Animated.View>
 
@@ -72,21 +72,21 @@ const Splash: React.FC<SplashProps> = ({navigation}) => {
           <Animated.View
             style={{
               ...splashStyles.logoContainer,
-              width: WIDTH * 1.1, // Increased width for larger logo
-              height: HEIGHT * 0.25, // Increased height for larger logo
+              width: WIDTH * 0.7, // Increased width for larger logo
+              height: HEIGHT * 0.2, // Increased height for larger logo
               opacity: fadeAnim, // Bind opacity to animated value
               transform: [{scale: scaleAnim}], // Apply scaling transform
             }}>
-            <Image
+            {/* <Image
               tintColor={WHITE}
               resizeMode="contain"
               style={{
                 alignSelf: 'center',
-                width: '100%', // Set to full width of container
-                height: '100%', // Set to full height of container
+                width: '80%', // Set to full width of container
+                height: '80%', // Set to full height of container
               }}
               source={LOGO} // Assuming LOGO is the app logo
-            />
+            /> */}
           </Animated.View>
         </LinearGradient>
       </SafeAreaView>

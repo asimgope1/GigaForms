@@ -63,7 +63,7 @@ const FormsTest = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* File Upload */}
         <Card style={styles.card}>

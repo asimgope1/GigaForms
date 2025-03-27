@@ -19,6 +19,8 @@ import {
   PURPLELIGHT,
   BRAND,
   BRANDBLUE,
+  GREEN,
+  DARKGREEN,
 } from '../../constants/color';
 import {splashStyles} from '../Splash/SplashStyles';
 import {RefreshControl} from 'react-native-gesture-handler';
@@ -233,7 +235,7 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
       <SafeAreaView style={[splashStyles.maincontainer]}>
         {/* App Bar */}
         <TitleHeader
@@ -306,7 +308,7 @@ const styles = StyleSheet.create({
   box: {
     width: WIDTH * 0.95,
     height: HEIGHT * 0.1,
-    backgroundColor: '#D5FFFF',
+    backgroundColor: '#cefad0',
     borderColor: 'black',
     borderWidth: 1,
     flexDirection: 'row',

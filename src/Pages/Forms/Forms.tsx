@@ -16,6 +16,7 @@ import {
   BRAND,
   BRANDBLUE,
   DARKGREEN,
+  GREEN,
   LIGHTGRAY,
   WHITE,
 } from '../../constants/color';
@@ -259,7 +260,7 @@ const Forms = ({navigation, route}) => {
         {/* Buttons */}
         <View style={styless.buttonContainer}>
           <TouchableOpacity
-            style={[styless.button, {backgroundColor: BRAND}]}
+            style={[styless.button, {backgroundColor: DARKGREEN}]}
             onPress={() => {
               navigation.navigate('FormsDataView', {
                 selectedData: item,
@@ -284,7 +285,7 @@ const Forms = ({navigation, route}) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
       <SafeAreaView style={[splashStyles.maincontainer]}>
         {/* back and page header */}
         <TitleHeader title="Forms" onPress={() => navigation.goBack()} />
@@ -402,11 +403,11 @@ export const styless = StyleSheet.create({
   subheaderText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: BRAND,
+    color: DARKGREEN,
   },
   rightButton: {
     padding: 8,
-    backgroundColor: BRAND,
+    backgroundColor: DARKGREEN,
     borderRadius: 8,
   },
   rightButtonText: {
@@ -477,7 +478,7 @@ export const styless = StyleSheet.create({
     fontWeight: 'bold',
   },
   viewMoreText: {
-    color: BRANDBLUE,
+    color: GREEN,
     fontSize: 16,
     textAlign: 'center',
     padding: 10,

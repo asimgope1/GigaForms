@@ -81,7 +81,7 @@ const Profile = ({navigation}: any) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={BRAND} barStyle="light-content" />
+      <MyStatusBar backgroundColor={DARKGREEN} barStyle="light-content" />
       <SafeAreaView style={styles.mainContainer}>
         {/* App Bar with Back Button */}
         <TitleHeader
@@ -207,7 +207,7 @@ export const styles = StyleSheet.create({
   },
   avatar: {
     borderWidth: 3,
-    borderColor: BRAND, // Border color to match profile theme
+    borderColor: DARKGREEN, // Border color to match profile theme
   },
   userInfoContainer: {
     alignItems: 'center',
@@ -220,7 +220,7 @@ export const styles = StyleSheet.create({
   },
   userType: {
     fontSize: 16,
-    color: BRAND, // Light green for user type
+    color: DARKGREEN, // Light green for user type
     marginVertical: 5,
   },
   userEmail: {
@@ -234,7 +234,7 @@ export const styles = StyleSheet.create({
     marginVertical: 5,
   },
   editButton: {
-    backgroundColor: BRAND,
+    backgroundColor: DARKGREEN,
     paddingVertical: 10,
     paddingHorizontal: 40,
     borderRadius: 25,
