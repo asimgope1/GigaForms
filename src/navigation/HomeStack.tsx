@@ -11,6 +11,7 @@ import {
   createDrawerNavigator,
   DrawerContentScrollView,
   DrawerContentComponentProps,
+  useDrawerStatus,
 } from '@react-navigation/drawer';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Home from '../Pages/Home/Home';
@@ -57,6 +58,16 @@ const CustomDrawer: React.FC<DrawerContentComponentProps> = ({navigation}) => {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [options, setOptions] = useState<any[]>([]);
   const [approvals, setApprovals] = useState<any[]>([]);
+
+  const isDrawerOpen = useDrawerStatus() === 'open';
+
+  // Reset submenus when drawer closes
+  useEffect(() => {
+    if (!isDrawerOpen) {
+      setShowRegistrationSubItems(false);
+      setShowApprovalSubItems(false);
+    }
+  }, [isDrawerOpen]);
 
   useEffect(() => {
     getProfileData();
