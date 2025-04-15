@@ -121,6 +121,7 @@ const Login = () => {
 
               {/* Email Input */}
               <TextInput
+                autoComplete="off"
                 label="Email"
                 value={email}
                 onChangeText={setEmail}
@@ -136,6 +137,7 @@ const Login = () => {
 
               {/* Password Input */}
               <TextInput
+                autoComplete="off"
                 label="Password"
                 value={password}
                 onChangeText={setPassword}
