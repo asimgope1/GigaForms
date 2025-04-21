@@ -21,6 +21,7 @@ import {BASE_URL} from '../../constants/url';
 import {useDispatch} from 'react-redux';
 import {checkuserToken} from '../../redux/actions/auth';
 import {Loader} from '../../components/Loader';
+import {JSEncrypt} from 'jsencrypt';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -60,33 +61,49 @@ const Login = () => {
 
   const dispatch = useDispatch();
 
+  const publicKey = `MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2OXEuxR7GqcfyrLrrR9q
+7rkOwHQVjuh2/pHrBKsinr5WGtXQrRGjKjuVMRutgOK/lp13lvmy58NxM4Ji9Bvw
+zgRD8Fl9ZkU8gag8HkC22TnLK9m4mVGvMOYSLsQohC8BtGZ/ky/i6q78Man6Lg1E
+hiX92NwBYodBPzhfL5ygTPGlHLKay+vxZSHVFLaMOVOLSmNngmE6J0BGxmGcvVG0
+bmDYwQm8dBvGYqCgP/BZ2/289oMX63xmgN+Ah3mBdkjCdl+kCzvqRQsSfCe0e8cJ
+snKznOy0XdgAihQTUK0BJXRPO04aHTtfztT2FthWHHY2AzK7MVPyP/uj96le/T5C
+aQIDAQAB`;
+
+  const encryptPassword = password => {
+    const encryptor = new JSEncrypt();
+    encryptor.setPublicKey(publicKey);
+    const encrypted = encryptor.encrypt(password);
+    return encrypted || null;
+  };
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      showToast('error', 'Login Failed', 'Please enter email and password');
-      return;
-    }
+    console.log('passsword', encryptPassword(password.trim()));
+    // if (!email || !password) {
+    //   showToast('error', 'Login Failed', 'Please enter email and password');
+    //   return;
+    // }
 
-    setLoading(true);
+    // setLoading(true);
 
-    try {
-      const response = await POSTNETWORK(`${BASE_URL}user/token/`, {
-        email: email.trim(),
-        password: password.trim(),
-      });
+    // try {
+    //   const response = await POSTNETWORK(`${BASE_URL}user/token/`, {
+    //     email: email.trim(),
+    //     password: encryptPassword(password.trim()),
+    //   });
 
-      if (response?.access && response?.refresh) {
-        storeObjByKey('loginResponse', response);
-        dispatch(checkuserToken(true));
-        showToast('success', 'Login Successful', 'Welcome back!');
-      } else {
-        showToast('error', 'Invalid Credentials', 'Check email and password');
-      }
-    } catch (error) {
-      console.error('Login Error:', error);
-      showToast('error', 'Login Failed', 'Something went wrong. Try again.');
-    } finally {
-      setLoading(false);
-    }
+    //   if (response?.access && response?.refresh) {
+    //     storeObjByKey('loginResponse', response);
+    //     dispatch(checkuserToken(true));
+    //     showToast('success', 'Login Successful', 'Welcome back!');
+    //   } else {
+    //     showToast('error', 'Invalid Credentials', 'Check email and password');
+    //   }
+    // } catch (error) {
+    //   console.error('Login Error:', error);
+    //   showToast('error', 'Login Failed', 'Something went wrong. Try again.');
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   const showToast = (type, title, message) => {
