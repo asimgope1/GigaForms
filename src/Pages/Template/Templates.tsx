@@ -530,46 +530,25 @@ const Templates = ({navigation, route}) => {
           <ScrollView horizontal>
             <View style={{minWidth: tableHeaders.length * WIDTH * 0.25}}>
               {/* Table Header */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  backgroundColor: '#e0e0e0',
-                  borderBottomWidth: 2,
-                  borderColor: '#ccc',
-                  paddingVertical: 12,
-                  paddingHorizontal: 5,
-                }}>
-                {/* Select Column Header */}
+              {tableHeaders.length > 0 && (
                 <View
                   style={{
-                    width: 70,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    paddingVertical: 12,
-                    borderRightWidth: 1,
+                    flexDirection: 'row',
+                    backgroundColor: '#e0e0e0',
+                    borderBottomWidth: 2,
                     borderColor: '#ccc',
+                    paddingVertical: 12,
+                    paddingHorizontal: 5,
                   }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 'bold',
-                      color: '#333',
-                      textAlign: 'center',
-                    }}>
-                    Select
-                  </Text>
-                </View>
+                  {/* Select Column Header */}
 
-                {/* Dynamic Table Headers */}
-                {tableHeaders.map((header, idx) => (
                   <View
-                    key={idx}
                     style={{
-                      width: WIDTH * 0.25,
+                      width: 70,
                       justifyContent: 'center',
                       alignItems: 'center',
                       paddingVertical: 12,
-                      borderRightWidth: idx === tableHeaders.length - 1 ? 0 : 1,
+                      borderRightWidth: 1,
                       borderColor: '#ccc',
                     }}>
                     <Text
@@ -578,15 +557,40 @@ const Templates = ({navigation, route}) => {
                         fontWeight: 'bold',
                         color: '#333',
                         textAlign: 'center',
-                        flexWrap: 'wrap',
-                      }}
-                      numberOfLines={1}
-                      ellipsizeMode="tail">
-                      {header}
+                      }}>
+                      Select
                     </Text>
                   </View>
-                ))}
-              </View>
+
+                  {/* Dynamic Table Headers */}
+                  {tableHeaders.map((header, idx) => (
+                    <View
+                      key={idx}
+                      style={{
+                        width: WIDTH * 0.25,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        paddingVertical: 12,
+                        borderRightWidth:
+                          idx === tableHeaders.length - 1 ? 0 : 1,
+                        borderColor: '#ccc',
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 'bold',
+                          color: '#333',
+                          textAlign: 'center',
+                          flexWrap: 'wrap',
+                        }}
+                        numberOfLines={1}
+                        ellipsizeMode="tail">
+                        {header}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
 
               {/* Table Data */}
               <FlatList
@@ -720,37 +724,45 @@ const Templates = ({navigation, route}) => {
                   style={{
                     maxHeight: HEIGHT * 0.5,
                   }}>
-                  {Object.keys(selectedRowData).map((key, idx) => (
-                    <View
-                      key={idx}
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        paddingVertical: 5,
-                        borderBottomWidth: 1,
-                        borderColor: '#eee',
-                      }}>
-                      <Text
+                  {Object.keys(selectedRowData).map((key, idx) => {
+                    console.log('key and idx', key, idx);
+                    if (['all_form_id', 'user_id', 'template_id'].includes(key))
+                      return null;
+
+                    const displayKey = key === 'max' ? 'Stage' : key;
+
+                    return (
+                      <View
+                        key={idx}
                         style={{
-                          fontSize: 14,
-                          fontWeight: 'bold',
-                          color: '#333',
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          paddingVertical: 5,
+                          borderBottomWidth: 1,
+                          borderColor: '#eee',
                         }}>
-                        {key.replace(/_/g, ' ')}:
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          color: '#555',
-                          flexShrink: 1,
-                          textAlign: 'right',
-                        }}
-                        numberOfLines={1}
-                        ellipsizeMode="tail">
-                        {selectedRowData[key]?.toString() || 'N/A'}
-                      </Text>
-                    </View>
-                  ))}
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            color: '#333',
+                          }}>
+                          {displayKey.replace(/_/g, ' ')}:
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            color: '#555',
+                            flexShrink: 1,
+                            textAlign: 'right',
+                          }}
+                          numberOfLines={1}
+                          ellipsizeMode="tail">
+                          {selectedRowData[key]?.toString() || 'N/A'}
+                        </Text>
+                      </View>
+                    );
+                  })}
                 </ScrollView>
 
                 {/* Close Button */}

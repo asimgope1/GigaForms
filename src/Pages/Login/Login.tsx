@@ -205,6 +205,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 100,
     marginBottom: 20,
+    resizeMode: 'contain',
   },
   input: {
     width: '100%',
