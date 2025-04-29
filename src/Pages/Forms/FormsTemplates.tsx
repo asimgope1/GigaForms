@@ -456,6 +456,7 @@ const FormsTemplates = ({navigation, route}) => {
         // Check if the response indicates success
         if (result && result.id) {
           // Handle successful submission here (no alert)
+          alert('Form submitted successfully!'); // Optional success alert
           console.log('Form submitted successfully!', result);
           setLoading(false);
           navigation.navigate('Forms'); // Navigate to Forms page
