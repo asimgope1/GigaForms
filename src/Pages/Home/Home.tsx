@@ -257,27 +257,43 @@ const Home: React.FC<HomeProps> = ({navigation}) => {
           contentContainerStyle={styles.container}>
           <FlatList
             data={DashboardItems}
-            ListFooterComponent={<View style={styles.footer}></View>}
-            renderItem={({item, index}) =>
-              item.type === 'Card' ? (
-                <RenderBox item={item} index={index} scrollY={scrollY} />
-              ) : item.type === 'Table' ? (
-                <DataTableComponent
-                  title={item.name}
-                  items={item.value || []}
-                  page={page}
-                  itemsPerPage={itemsPerPage}
-                  setPage={setPage}
-                  from={from}
-                  to={from + itemsPerPage} // Ensure `to` is correctly defined
-                  onItemsPerPageChange={setItemsPerPage}
-                />
-              ) : (
-                <RenderBox2 item={item} />
-              )
-            }
+            ListFooterComponent={<View style={styles.footer} />}
+            renderItem={({item, index}) => {
+              if (item.type === 'Card') {
+                return (
+                  <RenderBox item={item} index={index} scrollY={scrollY} />
+                );
+              }
+
+              if (item.type === 'Table') {
+                // Log the title before rendering
+                const ignoredKeys = ['all_form_id', 'user_id', 'template_id'];
+                const displayTitle = ignoredKeys.includes(item.key)
+                  ? null
+                  : item.key === 'max'
+                  ? 'Stage'
+                  : item.name;
+
+                console.log('Rendering Table Title:', displayTitle);
+
+                return (
+                  <DataTableComponent
+                    title={displayTitle}
+                    items={item.value || []}
+                    page={page}
+                    itemsPerPage={itemsPerPage}
+                    setPage={setPage}
+                    from={from}
+                    to={from + itemsPerPage}
+                    onItemsPerPageChange={setItemsPerPage}
+                  />
+                );
+              }
+
+              return <RenderBox2 item={item} />;
+            }}
             keyExtractor={item => item.id?.toString() || item.id}
-            scrollEnabled={false} // Prevent scroll conflicts inside ScrollView
+            scrollEnabled={false}
           />
         </Animated.ScrollView>
       </SafeAreaView>

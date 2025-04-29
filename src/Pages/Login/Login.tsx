@@ -78,32 +78,33 @@ aQIDAQAB`;
 
   const handleLogin = async () => {
     console.log('passsword', encryptPassword(password.trim()));
-    // if (!email || !password) {
-    //   showToast('error', 'Login Failed', 'Please enter email and password');
-    //   return;
-    // }
+    if (!email || !password) {
+      showToast('error', 'Login Failed', 'Please enter email and password');
+      return;
+    }
 
-    // setLoading(true);
+    setLoading(true);
 
-    // try {
-    //   const response = await POSTNETWORK(`${BASE_URL}user/token/`, {
-    //     email: email.trim(),
-    //     password: encryptPassword(password.trim()),
-    //   });
+    try {
+      const response = await POSTNETWORK(`${BASE_URL}user/token/`, {
+        email: email.trim(),
+        // password: encryptPassword(password.trim()),
+        password: password.trim(),
+      });
 
-    //   if (response?.access && response?.refresh) {
-    //     storeObjByKey('loginResponse', response);
-    //     dispatch(checkuserToken(true));
-    //     showToast('success', 'Login Successful', 'Welcome back!');
-    //   } else {
-    //     showToast('error', 'Invalid Credentials', 'Check email and password');
-    //   }
-    // } catch (error) {
-    //   console.error('Login Error:', error);
-    //   showToast('error', 'Login Failed', 'Something went wrong. Try again.');
-    // } finally {
-    //   setLoading(false);
-    // }
+      if (response?.access && response?.refresh) {
+        storeObjByKey('loginResponse', response);
+        dispatch(checkuserToken(true));
+        showToast('success', 'Login Successful', 'Welcome back!');
+      } else {
+        showToast('error', 'Invalid Credentials', 'Check email and password');
+      }
+    } catch (error) {
+      console.error('Login Error:', error);
+      showToast('error', 'Login Failed', 'Something went wrong. Try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const showToast = (type, title, message) => {
@@ -181,6 +182,8 @@ aQIDAQAB`;
                 Don't have an account?{' '}
                 <Text style={styles.signupLink}>Sign Up</Text>
               </Text>
+              <Text style={styles.signupLink}>Verison :- 1.0</Text>
+              <Text style={styles.signupLink}>29-04-25</Text>
             </Animated.View>
           </ScrollView>
         </TouchableWithoutFeedback>

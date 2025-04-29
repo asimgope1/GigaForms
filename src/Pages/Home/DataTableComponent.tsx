@@ -41,6 +41,11 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
 
   // Ensure `to` doesn't exceed `items.length`
   const validTo = Math.min(to, items.length);
+  const ignoredKeys = ['all_form_id', 'user_id', 'template_id'];
+  const filteredColumns = useMemo(
+    () => columns.filter(col => !ignoredKeys.includes(col)),
+    [columns],
+  );
 
   // Get visible items based on pagination
   const visibleItems = useMemo(() => {
@@ -105,25 +110,30 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
                 borderBottomColor: '#000',
                 backgroundColor: '#f4f4f4',
               }}>
-              {columns.map((col, index) => (
-                <DataTable.Title
-                  key={index}
-                  numeric={index !== 0}
-                  style={{
-                    borderRightWidth: 1,
-                    borderRightColor: '#ddd',
-                    padding: 10,
-                    width: 120,
-                    justifyContent: 'center',
-                  }}>
-                  <Text
-                    style={{textAlign: 'center', fontWeight: 'bold'}}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    {col.replace(/_/g, ' ')}
-                  </Text>
-                </DataTable.Title>
-              ))}
+              {columns
+                .filter(
+                  col =>
+                    !['all_form_id', 'user_id', 'template_id'].includes(col),
+                )
+                .map((col, index) => (
+                  <DataTable.Title
+                    key={index}
+                    numeric={index !== 0}
+                    style={{
+                      borderRightWidth: 1,
+                      borderRightColor: '#ddd',
+                      padding: 10,
+                      width: 120,
+                      justifyContent: 'center',
+                    }}>
+                    <Text
+                      style={{textAlign: 'center', fontWeight: 'bold'}}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      {col === 'max' ? 'Stage' : col.replace(/_/g, ' ')}
+                    </Text>
+                  </DataTable.Title>
+                ))}
             </DataTable.Header>
 
             {/* Table Rows */}
@@ -135,7 +145,7 @@ const DataTableComponent: React.FC<DataTableComponentProps> = ({
                   borderBottomColor: '#ddd',
                   backgroundColor: rowIndex % 2 === 0 ? '#fafafa' : 'white',
                 }}>
-                {columns.map((col, colIndex) => (
+                {filteredColumns.map((col, colIndex) => (
                   <DataTable.Cell
                     key={colIndex}
                     numeric={colIndex !== 0}

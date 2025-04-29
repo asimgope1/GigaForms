@@ -460,6 +460,15 @@ const Templates = ({navigation, route}) => {
     setCheckedItems({}); // ✅ Clear selected checkboxes
     setIsAnyChecked(false); // ✅ Reset 'isAnyChecked'
   };
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000); // Update every 1 second
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Fragment>
@@ -730,6 +739,7 @@ const Templates = ({navigation, route}) => {
                       return null;
 
                     const displayKey = key === 'max' ? 'Stage' : key;
+                    // debugger;
 
                     return (
                       <View
@@ -758,7 +768,9 @@ const Templates = ({navigation, route}) => {
                           }}
                           numberOfLines={1}
                           ellipsizeMode="tail">
-                          {selectedRowData[key]?.toString() || 'N/A'}
+                          {key === 'Training Date'
+                            ? currentTime.toLocaleString() // show live current date + time
+                            : selectedRowData[key]?.toString() || 'N/A'}
                         </Text>
                       </View>
                     );
